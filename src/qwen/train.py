@@ -110,31 +110,57 @@ def train_qwen(config: dict[str, Any], root: Path) -> dict[str, Any]:
     use_bf16 = bool(config.get("bf16", True) and device.type == "cuda" and torch.cuda.is_bf16_supported())
     use_fp16 = bool(config.get("fp16", False) and device.type == "cuda" and not use_bf16)
 
+    num_epochs = float(config.get("epochs", 2))
+    batch_size = int(config.get("batch_size", 1))
+    gradient_accumulation_steps = int(config.get("gradient_accumulation_steps", 8))
+
+    # TRL 1.14.0 uses warmup_steps instead of warmup_ratio
+    warmup_ratio = float(config.get("warmup_ratio", 0.03))
+
+    steps_per_epoch = (
+        len(dataset["train"])
+        + batch_size * gradient_accumulation_steps
+        - 1
+    ) // (batch_size * gradient_accumulation_steps)
+
+    total_training_steps = int(steps_per_epoch * num_epochs)
+    warmup_steps = int(total_training_steps * warmup_ratio)
+
     common_args = dict(
         output_dir=str(output_dir / "checkpoints"),
-        num_train_epochs=float(config.get("epochs", 2)),
-        per_device_train_batch_size=int(config.get("batch_size", 1)),
+        num_train_epochs=num_epochs,
+        per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=int(config.get("eval_batch_size", 1)),
-        gradient_accumulation_steps=int(config.get("gradient_accumulation_steps", 8)),
+        gradient_accumulation_steps=gradient_accumulation_steps,
         learning_rate=float(config.get("learning_rate", 1e-4)),
         lr_scheduler_type=str(config.get("lr_scheduler_type", "cosine")),
-        warmup_ratio=float(config.get("warmup_ratio", 0.03)),
+        warmup_steps=warmup_steps,
         logging_steps=int(config.get("logging_steps", 10)),
         save_steps=int(config.get("save_steps", 200)),
         eval_steps=int(config.get("eval_steps", 200)),
         save_total_limit=2,
         bf16=use_bf16,
         fp16=use_fp16,
-        gradient_checkpointing=bool(config.get("gradient_checkpointing", True)),
+        gradient_checkpointing=bool(
+            config.get("gradient_checkpointing", True)
+        ),
         report_to=[],
         seed=int(config.get("seed", 42)),
         packing=False,
     )
     try:
-        sft_args = SFTConfig(**common_args, eval_strategy="steps", max_length=int(config.get("max_seq_length", 1536)))
+        sft_args = SFTConfig(
+            **common_args,
+            eval_strategy="steps",
+            max_length=int(config.get("max_seq_length", 1536)),
+        )
     except TypeError:
         try:
-            sft_args = SFTConfig(**common_args, evaluation_strategy="steps", max_seq_length=int(config.get("max_seq_length", 1536)))
+            sft_args = SFTConfig(
+                **common_args,
+                evaluation_strategy="steps",
+                max_length=int(config.get("max_seq_length", 1536))
+            )
         except TypeError:
             sft_args = SFTConfig(**common_args)
 
