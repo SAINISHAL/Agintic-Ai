@@ -1,0 +1,36 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Models and training artifacts
+models/emotion/**
+models/qwen/**
+!models/emotion/.gitkeep
+!models/qwen/.gitkeep
+
+outputs/**
+!outputs/.gitkeep
+
+# Data (user-provided; keep folder structure)
+data/counselling/*.csv
+data/gita/*.csv
+!data/counselling/.gitkeep
+!data/gita/.gitkeep
+data/processed/**
+!data/processed/.gitkeep
+
+# Hugging Face / caches
+.cache/
+hf_cache/
+wandb/
+runs/
+
+.env
+*.pt
+*.bin
+*.safetensors
+*.ckpt

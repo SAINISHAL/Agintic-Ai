@@ -1,0 +1,64 @@
+seed: 42
+model_name: Qwen/Qwen3-4B
+load_in_4bit: true
+load_in_8bit: false
+trust_remote_code: true
+max_seq_length: 1536
+learning_rate: 1.0e-4
+batch_size: 1
+eval_batch_size: 1
+gradient_accumulation_steps: 8
+epochs: 2
+warmup_ratio: 0.03
+weight_decay: 0.0
+max_grad_norm: 1.0
+logging_steps: 10
+save_steps: 200
+eval_steps: 200
+lr_scheduler_type: cosine
+gradient_checkpointing: true
+bf16: true
+fp16: false
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+generation:
+  max_new_tokens: 256
+  temperature: 0.7
+  top_p: 0.9
+  repetition_penalty: 1.05
+paths:
+  counselling_train: data/counselling/my_dataset_train.csv
+  counselling_val: data/counselling/my_dataset_val.csv
+  counselling_test: data/counselling/my_dataset_test.csv
+  gita_dir: data/gita
+  processed_dir: data/processed/qwen
+  output_dir: models/qwen
+  reports_dir: outputs/qwen
+  baseline_dir: outputs/qwen/baseline
+mix:
+  include_counselling: true
+  include_gita: true
+  include_emotion_aware_cultural: true
+  max_gita_examples: null
+  max_counselling_examples: null
+num_context_turns: 8
+patient_speakers:
+  - P
+  - Patient
+  - USER
+  - User
+therapist_speakers:
+  - T
+  - Therapist
+  - COUNSELLOR
+  - Counsellor

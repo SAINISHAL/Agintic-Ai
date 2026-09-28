@@ -1,0 +1,49 @@
+seed: 42
+base_model: roberta-base
+max_length: 384
+learning_rate: 2.0e-5
+batch_size: 8
+eval_batch_size: 16
+epochs: 4
+weight_decay: 0.01
+warmup_ratio: 0.06
+max_grad_norm: 1.0
+dropout: 0.1
+num_context_turns: 4
+threshold: 0.4
+threshold_search:
+  min: 0.15
+  max: 0.85
+  step: 0.05
+  selection_metric: micro_f1
+patient_speakers:
+  - P
+  - Patient
+  - USER
+  - User
+therapist_speakers:
+  - T
+  - Therapist
+  - COUNSELLOR
+  - Counsellor
+paths:
+  train_csv: data/counselling/my_dataset_train.csv
+  val_csv: data/counselling/my_dataset_val.csv
+  test_csv: data/counselling/my_dataset_test.csv
+  processed_dir: data/processed/emotion
+  output_dir: models/emotion
+  reports_dir: outputs/emotion
+emotions:
+  - Anger
+  - Annoyance
+  - Anticipation
+  - Confusion
+  - Contempt
+  - Disgust
+  - Joy
+  - Neutral
+  - Sadness
+  - Scared
+  - Serenity
+  - Surprise
+  - Trust
