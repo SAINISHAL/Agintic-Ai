@@ -1,5 +1,7 @@
 # Phase 1 — Emotion-Aware, Culturally Grounded Counselling Chatbot
 
+Repo: [SAINISHAL/Agintic-Ai](https://github.com/SAINISHAL/Agintic-Ai)
+
 Phase 1 only: conversation history → emotion detection → context → prompt → Qwen3-4B.
 
 No RAG, vector database, agents, long-term memory, reranking, or full safety agent.
