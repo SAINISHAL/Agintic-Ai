@@ -32,6 +32,14 @@ pip install -r requirements.txt
 
 CUDA is detected automatically. On CPU, Qwen 4-bit quantization is skipped. On some Windows setups `bitsandbytes` fails; training then falls back to LoRA without 4-bit.
 
+On Google Colab, a GPU runtime often ships an old `torchao` (for example 0.10.0) and an old `bitsandbytes`. After `pip install -r requirements.txt`, also run:
+
+```bash
+pip install -U "bitsandbytes>=0.46.1" "torchao>=0.16.0"
+```
+
+Then restart the runtime and install again if needed. Without this, PEFT can raise `Found an incompatible version of torchao` and 4-bit load is skipped.
+
 ## Run Phase 1
 
 ```bash
