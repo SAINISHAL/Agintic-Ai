@@ -1,0 +1,197 @@
+{
+  "threshold": 0.45,
+  "micro_f1": 0.8046590633341422,
+  "macro_f1": 0.22481929864313463,
+  "weighted_f1": 0.8034228558275681,
+  "precision_micro": 0.8171513060620995,
+  "recall_micro": 0.7925430210325047,
+  "precision_macro": 0.21712338322750224,
+  "recall_macro": 0.23766255231582947,
+  "exact_match_ratio": 0.7711442786069652,
+  "per_label": {
+    "Anger": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 4.0
+    },
+    "Annoyance": {
+      "precision": 0.2222222222222222,
+      "recall": 0.37037037037037035,
+      "f1-score": 0.2777777777777778,
+      "support": 27.0
+    },
+    "Anticipation": {
+      "precision": 0.3125,
+      "recall": 0.2857142857142857,
+      "f1-score": 0.29850746268656714,
+      "support": 35.0
+    },
+    "Confusion": {
+      "precision": 0.3333333333333333,
+      "recall": 0.34545454545454546,
+      "f1-score": 0.3392857142857143,
+      "support": 55.0
+    },
+    "Contempt": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 10.0
+    },
+    "Disgust": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 10.0
+    },
+    "Joy": {
+      "precision": 0.06666666666666667,
+      "recall": 0.07692307692307693,
+      "f1-score": 0.07142857142857142,
+      "support": 13.0
+    },
+    "Neutral": {
+      "precision": 0.9459815546772069,
+      "recall": 0.8858729179518815,
+      "f1-score": 0.9149410640331316,
+      "support": 1621.0
+    },
+    "Sadness": {
+      "precision": 0.5263157894736842,
+      "recall": 0.704225352112676,
+      "f1-score": 0.6024096385542169,
+      "support": 213.0
+    },
+    "Scared": {
+      "precision": 0.4155844155844156,
+      "recall": 0.42105263157894735,
+      "f1-score": 0.41830065359477125,
+      "support": 76.0
+    },
+    "Serenity": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 8.0
+    },
+    "Surprise": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 3.0
+    },
+    "Trust": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 17.0
+    },
+    "micro avg": {
+      "precision": 0.8171513060620995,
+      "recall": 0.7925430210325047,
+      "f1-score": 0.8046590633341422,
+      "support": 2092.0
+    },
+    "macro avg": {
+      "precision": 0.21712338322750224,
+      "recall": 0.23766255231582947,
+      "f1-score": 0.22481929864313463,
+      "support": 2092.0
+    },
+    "weighted avg": {
+      "precision": 0.8189595023298579,
+      "recall": 0.7925430210325047,
+      "f1-score": 0.8034228558275681,
+      "support": 2092.0
+    },
+    "samples avg": {
+      "precision": 0.8058872305140963,
+      "recall": 0.8056384742951906,
+      "f1-score": 0.8022056384742953,
+      "support": 2092.0
+    }
+  },
+  "per_label_confusion": {
+    "Anger": {
+      "tn": 2006,
+      "fp": 0,
+      "fn": 4,
+      "tp": 0
+    },
+    "Annoyance": {
+      "tn": 1948,
+      "fp": 35,
+      "fn": 17,
+      "tp": 10
+    },
+    "Anticipation": {
+      "tn": 1953,
+      "fp": 22,
+      "fn": 25,
+      "tp": 10
+    },
+    "Confusion": {
+      "tn": 1917,
+      "fp": 38,
+      "fn": 36,
+      "tp": 19
+    },
+    "Contempt": {
+      "tn": 2000,
+      "fp": 0,
+      "fn": 10,
+      "tp": 0
+    },
+    "Disgust": {
+      "tn": 2000,
+      "fp": 0,
+      "fn": 10,
+      "tp": 0
+    },
+    "Joy": {
+      "tn": 1983,
+      "fp": 14,
+      "fn": 12,
+      "tp": 1
+    },
+    "Neutral": {
+      "tn": 307,
+      "fp": 82,
+      "fn": 185,
+      "tp": 1436
+    },
+    "Sadness": {
+      "tn": 1662,
+      "fp": 135,
+      "fn": 63,
+      "tp": 150
+    },
+    "Scared": {
+      "tn": 1889,
+      "fp": 45,
+      "fn": 44,
+      "tp": 32
+    },
+    "Serenity": {
+      "tn": 2002,
+      "fp": 0,
+      "fn": 8,
+      "tp": 0
+    },
+    "Surprise": {
+      "tn": 2007,
+      "fp": 0,
+      "fn": 3,
+      "tp": 0
+    },
+    "Trust": {
+      "tn": 1993,
+      "fp": 0,
+      "fn": 17,
+      "tp": 0
+    }
+  },
+  "test_loss": 0.09149019392059436,
+  "n_examples": 2010
+}

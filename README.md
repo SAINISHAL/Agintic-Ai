@@ -42,6 +42,8 @@ Then restart the runtime and install again if needed. Without this, PEFT can rai
 
 ## Run Phase 1
 
+The trained emotion checkpoint is already in `models/emotion/best` (plus reports in `outputs/emotion`). You do **not** need to run `train_emotion.py` again unless you want to retrain.
+
 ```bash
 python scripts/test_e2e.py
 python scripts/prepare_emotion_data.py
@@ -54,7 +56,7 @@ python scripts/generate_phase1_report.py
 streamlit run app.py
 ```
 
-Training Qwen3-4B is optional before the UI. If `models/qwen/best` is missing, the app loads base `Qwen/Qwen3-4B` as the **prompting-only baseline**. If `models/emotion/best` is missing, emotion uses a keyword baseline.
+Skip `prepare_emotion_data.py` / `train_emotion.py` / `evaluate_emotion.py` if you are using the shipped checkpoint. Training Qwen3-4B is still optional before the UI. If `models/qwen/best` is missing, the app loads base `Qwen/Qwen3-4B` as the **prompting-only baseline**. If `models/emotion/best` is missing, emotion uses a keyword baseline.
 
 ## Architecture
 

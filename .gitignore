@@ -8,12 +8,16 @@ env/
 
 # Models and training artifacts
 models/emotion/**
-models/qwen/**
 !models/emotion/.gitkeep
+!models/emotion/best/
+!models/emotion/best/**
+models/qwen/**
 !models/qwen/.gitkeep
 
 outputs/**
 !outputs/.gitkeep
+!outputs/emotion/
+!outputs/emotion/**
 
 # Data (user-provided; keep folder structure)
 data/counselling/*.csv
@@ -34,3 +38,5 @@ runs/
 *.bin
 *.safetensors
 *.ckpt
+!models/emotion/best/**/*.pt
+!models/emotion/best/**/*.safetensors

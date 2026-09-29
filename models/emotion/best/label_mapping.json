@@ -1,0 +1,131 @@
+{
+  "labels": [
+    "Anger",
+    "Annoyance",
+    "Anticipation",
+    "Confusion",
+    "Contempt",
+    "Disgust",
+    "Joy",
+    "Neutral",
+    "Sadness",
+    "Scared",
+    "Serenity",
+    "Surprise",
+    "Trust"
+  ],
+  "threshold": 0.45,
+  "max_length": 384,
+  "base_model": "roberta-base",
+  "threshold_tuning": {
+    "selection_metric": "micro_f1",
+    "best_score": 0.8335368335368335,
+    "curve": [
+      {
+        "threshold": 0.15,
+        "micro_f1": 0.8046903627702455,
+        "macro_f1": 0.3251117634405079,
+        "weighted_f1": 0.8211120812709501,
+        "exact_match_ratio": 0.7512605042016807
+      },
+      {
+        "threshold": 0.2,
+        "micro_f1": 0.8193134666163712,
+        "macro_f1": 0.3373828704911173,
+        "weighted_f1": 0.8260099685133921,
+        "exact_match_ratio": 0.7689075630252101
+      },
+      {
+        "threshold": 0.25,
+        "micro_f1": 0.8276923076923077,
+        "macro_f1": 0.32363300095047204,
+        "weighted_f1": 0.8290548868486116,
+        "exact_match_ratio": 0.7831932773109244
+      },
+      {
+        "threshold": 0.3,
+        "micro_f1": 0.8287724784988272,
+        "macro_f1": 0.31383377117006356,
+        "weighted_f1": 0.8255139186606301,
+        "exact_match_ratio": 0.788235294117647
+      },
+      {
+        "threshold": 0.35,
+        "micro_f1": 0.8326693227091634,
+        "macro_f1": 0.3076597445149088,
+        "weighted_f1": 0.8253059165207624,
+        "exact_match_ratio": 0.7924369747899159
+      },
+      {
+        "threshold": 0.4,
+        "micro_f1": 0.8335348649738009,
+        "macro_f1": 0.30875184088096935,
+        "weighted_f1": 0.8238698706320972,
+        "exact_match_ratio": 0.795798319327731
+      },
+      {
+        "threshold": 0.45,
+        "micro_f1": 0.8335368335368335,
+        "macro_f1": 0.3094838281222326,
+        "weighted_f1": 0.8220879228880776,
+        "exact_match_ratio": 0.7941176470588235
+      },
+      {
+        "threshold": 0.5,
+        "micro_f1": 0.8327168105219893,
+        "macro_f1": 0.30656938346145163,
+        "weighted_f1": 0.8195411382785944,
+        "exact_match_ratio": 0.7924369747899159
+      },
+      {
+        "threshold": 0.55,
+        "micro_f1": 0.8291873963515755,
+        "macro_f1": 0.296559032438462,
+        "weighted_f1": 0.813960014837711,
+        "exact_match_ratio": 0.7873949579831933
+      },
+      {
+        "threshold": 0.6,
+        "micro_f1": 0.8324233515329693,
+        "macro_f1": 0.2989998124109133,
+        "weighted_f1": 0.8147582515066998,
+        "exact_match_ratio": 0.7848739495798319
+      },
+      {
+        "threshold": 0.65,
+        "micro_f1": 0.8300764655904843,
+        "macro_f1": 0.27837256886477896,
+        "weighted_f1": 0.8088745541460844,
+        "exact_match_ratio": 0.7781512605042017
+      },
+      {
+        "threshold": 0.7,
+        "micro_f1": 0.8258451005562687,
+        "macro_f1": 0.25219495973166484,
+        "weighted_f1": 0.8026237321365195,
+        "exact_match_ratio": 0.7722689075630252
+      },
+      {
+        "threshold": 0.75,
+        "micro_f1": 0.8249027237354085,
+        "macro_f1": 0.2494929163381697,
+        "weighted_f1": 0.7986778215474252,
+        "exact_match_ratio": 0.7663865546218488
+      },
+      {
+        "threshold": 0.8,
+        "micro_f1": 0.8178633975481612,
+        "macro_f1": 0.22484159671968088,
+        "weighted_f1": 0.7870882761599256,
+        "exact_match_ratio": 0.7554621848739496
+      },
+      {
+        "threshold": 0.85,
+        "micro_f1": 0.8197596795727636,
+        "macro_f1": 0.21514417137298408,
+        "weighted_f1": 0.7853808977037756,
+        "exact_match_ratio": 0.7504201680672269
+      }
+    ]
+  }
+}
