@@ -1,3 +1,8 @@
+"""Not part of the Phase 1 run flow. Kept for a later fine-tuning phase (Gita SFT / QLoRA).
+
+Requires the Gita ``Chapter_*_QA.csv`` files, which Phase 1 does not use.
+"""
+
 from __future__ import annotations
 
 import argparse

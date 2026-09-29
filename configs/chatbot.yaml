@@ -4,6 +4,8 @@ emotion:
   config_path: configs/emotion.yaml
   fallback_to_baseline: true
 qwen:
+  # Phase 1: prompting-only. The base model is used directly; no fine-tuned adapter is loaded.
+  use_finetuned: false
   model_path: models/qwen/best
   base_model_name: Qwen/Qwen3-4B
   config_path: configs/qwen.yaml

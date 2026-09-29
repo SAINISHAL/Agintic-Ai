@@ -1,3 +1,8 @@
+"""Not part of the Phase 1 run flow. Kept for a later fine-tuning phase (Gita SFT / QLoRA).
+
+Phase 1 uses base Qwen3-4B via prompting only (see ``configs/chatbot.yaml`` ``qwen.use_finetuned``).
+"""
+
 from __future__ import annotations
 
 import argparse

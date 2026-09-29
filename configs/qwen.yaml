@@ -1,3 +1,5 @@
+# Phase 1 uses only `model_name`, `trust_remote_code`, and `generation` (prompting-only chatbot).
+# Everything else here is for the later QLoRA / Gita SFT fine-tuning phase and is not run in Phase 1.
 seed: 42
 model_name: Qwen/Qwen3-4B
 load_in_4bit: true

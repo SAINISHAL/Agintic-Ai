@@ -27,13 +27,14 @@ def main() -> None:
     out = ensure_dir(root / "outputs")
     quality = _read(root / "outputs" / "emotion" / "data_quality_report.json")
     emotion_eval = _read(root / "outputs" / "emotion" / "evaluation_summary.json")
-    qwen_eval = _read(root / "outputs" / "qwen" / "automatic_eval_summary.json")
-    sft = _read(root / "data" / "processed" / "qwen" / "sft_summary.json")
+    chatbot_eval = _read(root / "outputs" / "chatbot" / "automatic_eval_summary.json")
 
     lines = [
         "# Phase 1 evaluation report",
         "",
         "This report aggregates artifacts produced by the Phase 1 scripts.",
+        "Phase 1 scope: emotion detection (fine-tuned RoBERTa) + chatbot replies from base Qwen3-4B via prompting only.",
+        "No Qwen fine-tuning or Gita SFT is part of this phase.",
         "Automatic chatbot scores are heuristics and are labelled as such.",
         "",
         "## Data quality and leakage",
@@ -80,37 +81,32 @@ def main() -> None:
         lines.append("Run `python scripts/train_emotion.py` then `python scripts/evaluate_emotion.py`.")
         lines.append("")
 
-    lines += ["## Qwen SFT data", ""]
-    if sft:
-        lines.append("```json")
-        lines.append(json.dumps(sft, indent=2))
-        lines.append("```")
-        lines.append("")
-    else:
-        lines.append("Run `python scripts/prepare_qwen_data.py`.")
-        lines.append("")
-
     lines += ["## Chatbot (automatic evaluation)", ""]
-    if qwen_eval:
+    if chatbot_eval:
         lines.append("```json")
-        lines.append(json.dumps(qwen_eval, indent=2))
+        lines.append(json.dumps(chatbot_eval, indent=2))
         lines.append("```")
         lines.append("")
-        lines.append("Inspectable file columns: conversation, user_message, true_emotion, predicted_emotion, model_response.")
+        lines.append(
+            "Inspectable file columns: conversation_id, turn_index, user_message, true_emotion, "
+            "predicted_emotion, model_response, grounding_used, automatic_scores."
+        )
         lines.append("")
     else:
-        lines.append("Run `python scripts/evaluate_qwen.py` after models are available.")
+        lines.append("Run `python scripts/evaluate_chatbot.py` after the emotion checkpoint is in `models/emotion/best`.")
         lines.append("")
 
     lines += [
         "## Baseline vs Phase 1",
         "",
         "- Emotion: keyword / majority baselines vs fine-tuned RoBERTa (see emotion evaluation).",
-        "- Response model: original Qwen3-4B prompting (chatbot fallback when `models/qwen/best` is missing) vs QLoRA fine-tuned adapter after `train_qwen.py`.",
-        "  Re-run `evaluate_qwen.py` in each setting and compare `outputs/qwen/automatic_eval_summary.json`.",
+        "- Response model: base Qwen3-4B via prompting only. The prompt carries the detected emotion, "
+        "inferred need, and short session history; no adapter is loaded.",
         "",
         "## Out of scope (later phases)",
         "",
+        "Qwen QLoRA fine-tuning and Gita Q&A SFT (`scripts/train_qwen.py`, `scripts/prepare_qwen_data.py`, "
+        "`scripts/evaluate_qwen.py` are kept in the repo but are not part of this phase).",
         "RAG, vector databases, agentic workflows, long-term memory, reranking, and the full safety agent were not implemented.",
         "",
     ]

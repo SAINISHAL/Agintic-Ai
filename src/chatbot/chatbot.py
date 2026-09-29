@@ -59,7 +59,16 @@ class CounsellingChatbot:
         adapter_or_model = self.qwen_model_path
         base_name = self.config["qwen"].get("base_model_name", "Qwen/Qwen3-4B")
         load_4bit = bool(self.config["qwen"].get("load_in_4bit", True))
-        if adapter_or_model.exists() and (
+        use_finetuned = bool(self.config["qwen"].get("use_finetuned", False))
+        if not use_finetuned:
+            print(f"Phase 1: prompting-only {base_name} (no fine-tuning).")
+            self.generator = QwenGenerator(
+                model_path=base_name,
+                base_model_name=base_name,
+                load_in_4bit=load_4bit,
+                generation_config=gen_cfg,
+            )
+        elif adapter_or_model.exists() and (
             (adapter_or_model / "adapter_config.json").exists() or (adapter_or_model / "config.json").exists()
         ):
             self.generator = QwenGenerator(
