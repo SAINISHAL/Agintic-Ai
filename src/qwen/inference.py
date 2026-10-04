@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -66,6 +67,7 @@ class QwenGenerator:
             messages,
             tokenize=False,
             add_generation_prompt=True,
+            enable_thinking=False,
         )
         inputs = self.tokenizer(prompt, return_tensors="pt")
         inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
@@ -81,5 +83,6 @@ class QwenGenerator:
                 eos_token_id=self.tokenizer.eos_token_id,
             )
         generated = output_ids[0, inputs["input_ids"].shape[-1] :]
-        text = self.tokenizer.decode(generated, skip_special_tokens=True).strip()
+        text = self.tokenizer.decode(generated, skip_special_tokens=True)
+        text = re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
         return text

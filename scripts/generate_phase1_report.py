@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.utils.config import project_root
+from src.utils.config import load_config, project_root
 from src.utils.io import ensure_dir, load_json
 
 
@@ -28,12 +28,13 @@ def main() -> None:
     quality = _read(root / "outputs" / "emotion" / "data_quality_report.json")
     emotion_eval = _read(root / "outputs" / "emotion" / "evaluation_summary.json")
     chatbot_eval = _read(root / "outputs" / "chatbot" / "automatic_eval_summary.json")
+    qwen_model_name = load_config(root / "configs" / "qwen.yaml").get("model_name", "Qwen")
 
     lines = [
         "# Phase 1 evaluation report",
         "",
         "This report aggregates artifacts produced by the Phase 1 scripts.",
-        "Phase 1 scope: emotion detection (fine-tuned RoBERTa) + chatbot replies from base Qwen3-4B via prompting only.",
+        f"Phase 1 scope: emotion detection (fine-tuned RoBERTa) + chatbot replies from base {qwen_model_name} via prompting only.",
         "No Qwen fine-tuning or Gita SFT is part of this phase.",
         "Automatic chatbot scores are heuristics and are labelled as such.",
         "",
@@ -100,7 +101,7 @@ def main() -> None:
         "## Baseline vs Phase 1",
         "",
         "- Emotion: keyword / majority baselines vs fine-tuned RoBERTa (see emotion evaluation).",
-        "- Response model: base Qwen3-4B via prompting only. The prompt carries the detected emotion, "
+        f"- Response model: base {qwen_model_name} via prompting only. The prompt carries the detected emotion, "
         "inferred need, and short session history; no adapter is loaded.",
         "",
         "## Out of scope (later phases)",

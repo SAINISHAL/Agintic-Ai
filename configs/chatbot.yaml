@@ -7,7 +7,7 @@ qwen:
   # Phase 1: prompting-only. The base model is used directly; no fine-tuned adapter is loaded.
   use_finetuned: false
   model_path: models/qwen/best
-  base_model_name: Qwen/Qwen3-4B
+  base_model_name: Qwen/Qwen3-0.6B
   config_path: configs/qwen.yaml
   load_in_4bit: true
   fallback_to_base: true
