@@ -84,7 +84,7 @@ Gita grounding is **optional prompt text**, not training. The prompt tells the m
 ## Emotion model
 
 - Multi-label (not softmax). `"Sadness, Scared"` → `["Sadness", "Scared"]`.
-- Input: current utterance + **previous** turns only (no future leak).
+- Runtime emotion input: current user utterance only; prior turns remain response context so earlier assistant text cannot override the user's current emotion.
 - Loss: `BCEWithLogitsLoss` / sigmoid.
 - Threshold is **tuned on validation** (not assumed 0.5) and saved in `models/emotion/best/label_mapping.json`.
 - Official train/val/test CSVs are the split. Overlap is reported; missing IDs are **not silently deleted**.

@@ -28,13 +28,9 @@ bot = load_bot()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-if "last_meta" not in st.session_state:
-    st.session_state.last_meta = None
 
 if st.button("Clear conversation"):
-    bot.clear_history()
     st.session_state.messages = []
-    st.session_state.last_meta = None
     st.rerun()
 
 st.subheader("Conversation")
@@ -44,32 +40,30 @@ for turn in st.session_state.messages:
 
 user_text = st.chat_input("Share what is on your mind...")
 if user_text:
+    conversation_history = list(st.session_state.messages)
     st.session_state.messages.append({"role": "user", "content": user_text})
     with st.chat_message("user"):
         st.markdown(user_text)
     with st.chat_message("assistant"):
         with st.spinner("Listening..."):
-            result = bot.chat(user_text)
+            result = bot.chat(user_text, conversation_history=conversation_history, persist=False)
         st.markdown(result["response"])
+    emotions = result.get("emotions") or []
+    emotion_summary = ", ".join(
+        f"{item['label']} ({item.get('confidence', 0):.2f})" for item in emotions
+    ) or "none"
+    safety = result.get("safety") or {}
+    print(
+        "[chatbot] "
+        f"emotions={emotion_summary}; "
+        f"need/context={result.get('context') or 'unspecified'}; "
+        f"grounding_used={result.get('grounding_used', False)}; "
+        f"crisis={safety.get('crisis', False)}; "
+        f"harm_to_others={safety.get('harm_to_others', False)}",
+        flush=True,
+    )
     st.session_state.messages.append({"role": "assistant", "content": result["response"]})
-    st.session_state.last_meta = result
     st.rerun()
-
-meta = st.session_state.last_meta
-if meta:
-    st.divider()
-    emotions = meta.get("emotions") or []
-    labels = ", ".join(item["label"] for item in emotions) if emotions else "—"
-    st.markdown(f"**Emotion detected:** {labels}")
-    st.markdown("**Confidence:**")
-    for item in emotions:
-        st.markdown(f"- {item['label']}: {item.get('confidence', 0):.2f}")
-    st.markdown(f"**Need / context:** {meta.get('context')}")
-    if meta.get("grounding_used"):
-        st.caption("This reply included optional cultural / Gita-inspired grounding.")
-    st.divider()
-    st.markdown("**Response:**")
-    st.write(meta.get("response"))
 
 st.divider()
 st.caption(

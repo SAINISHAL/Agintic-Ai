@@ -67,6 +67,9 @@ Need/context:
 {grounding_instruction}
 {safety}
 
+Treat the current user message as the source of truth. Emotion labels are hints, not facts.
+Never reverse the user's explicit meaning; for example, "0 preparation" means unprepared, not prepared.
+
 Generate the next response. Be concise, warm, and specific to what the user said.
 Do not reveal chain-of-thought or internal scoring.
 """

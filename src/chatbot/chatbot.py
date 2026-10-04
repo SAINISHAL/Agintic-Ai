@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,26 @@ from src.qwen.inference import QwenGenerator
 from src.utils.config import load_config, project_root, resolve_path
 from src.utils.device import select_device
 from src.utils.emotions import CANONICAL_EMOTIONS
+
+
+_UNPREPARED_PATTERN = re.compile(
+    r"\b(?:0|zero|no)\s+(?:preparation|prep)\b|\b(?:not|un)prepared\b|\b(?:haven't|have not)\s+prepared\b",
+    re.I,
+)
+_FALSE_PREPARED_CLAIM = re.compile(
+    r"\b(?:you(?:'re| are)\s+(?:already\s+|fully\s+)?prepared|already\s+prepared)\b",
+    re.I,
+)
+
+
+def correct_preparation_contradiction(user_message: str, response: str) -> str:
+    if _UNPREPARED_PATTERN.search(user_message) and _FALSE_PREPARED_CLAIM.search(response):
+        return (
+            "That sounds stressful, especially with placements coming up and feeling unprepared. "
+            "Start with one manageable step: choose a role and practice one common interview question. "
+            "I can help you make a short preparation plan."
+        )
+    return response
 
 
 class CounsellingChatbot:
@@ -92,17 +113,8 @@ class CounsellingChatbot:
             raise FileNotFoundError(f"Qwen model not found: {adapter_or_model}")
         self._initialized = True
 
-    def detect_emotion(self, user_message: str, conversation_history: list[dict[str, str]] | None = None) -> dict[str, Any]:
-        history = conversation_history if conversation_history is not None else self.session_history
-        context_lines = []
-        if history:
-            context_lines.append("[CONTEXT]")
-            for turn in history[-4:]:
-                speaker = "P" if turn.get("role") == "user" else "T"
-                context_lines.append(f"{speaker}: {turn.get('content', '')}")
-        context_lines.append("[CURRENT]")
-        context_lines.append(f"P: {user_message}")
-        text = "\n".join(context_lines)
+    def detect_emotion(self, user_message: str) -> dict[str, Any]:
+        text = f"[CURRENT]\nP: {user_message}"
         if self.emotion_model is not None:
             return self.emotion_model.predict(text)
         labels = keyword_predict(user_message, CANONICAL_EMOTIONS)
@@ -148,7 +160,7 @@ class CounsellingChatbot:
             conversation_history = list(self.session_history)
 
         safety = safety_check(user_message)
-        emotion_out = self.detect_emotion(user_message, conversation_history)
+        emotion_out = self.detect_emotion(user_message)
         emotions = emotion_out.get("emotions", [])
         context = self.build_context(user_message, emotions, conversation_history)
 
@@ -162,6 +174,7 @@ class CounsellingChatbot:
                 conversation_history,
                 safety_note=safety.get("prompt_note"),
             )
+            response = correct_preparation_contradiction(user_message, response)
 
         if persist:
             self.session_history.append({"role": "user", "content": user_message})
