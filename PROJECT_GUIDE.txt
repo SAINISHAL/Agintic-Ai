@@ -1,0 +1,469 @@
+PROJECT GUIDE: EMOTION-AWARE COUNSELLING CHATBOT
+================================================
+
+All paths below are relative to the repository root. This guide describes the
+current source code and checked-in artifacts. It explains the purpose of each
+source/config/script file and the role of repeated data/model files; it does not
+repeat the contents of each CSV row, JSON token, or binary weight tensor.
+
+1. PROJECT PURPOSE AND CURRENT SCOPE
+------------------------------------
+This repository contains a local counselling-support chatbot prototype. Its
+Phase 1 response pipeline is:
+
+  user message
+    -> basic safety pattern checks
+    -> fine-tuned RoBERTa multi-label emotion prediction
+    -> rule-based need/context inference
+    -> prompt construction with current message and short chat history
+    -> base Qwen language-model generation
+    -> response in the Streamlit chat
+
+The current configured response model is Qwen/Qwen3-0.6B. It is used as a
+prompted base model, not a fine-tuned Qwen model. Generation is configured for
+up to 150 new tokens, Qwen thinking mode is disabled, and residual think tags
+are stripped from output.
+
+The trained emotion checkpoint already exists in models/emotion/best. Running
+the chatbot does not train either model. The Qwen QLoRA/Gita SFT pipeline exists
+as later-phase code, but is not used by the current app. Gita Q&A data is not
+needed for Phase 1. There is no RAG database, long-term user memory, agent
+framework, or comprehensive clinical safety system.
+
+2. WHAT HAPPENS FOR ONE MESSAGE
+--------------------------------
+1. app.py loads a CounsellingChatbot once through Streamlit's resource cache.
+   Model weights are loaded at startup and reused while the server process lives.
+2. The browser keeps its displayed messages in Streamlit session state. Before
+   each call, app.py passes that session's previous turns to the chatbot as
+   response context. The cached chatbot is called with persist=False so it does
+   not accumulate one shared conversation across browser sessions.
+3. safety.py checks the current text for a limited set of crisis/self-harm and
+   harm-to-others phrases. A match returns a prepared override response instead
+   of generated text. This is a small keyword/pattern safeguard, not a clinical
+   risk detector.
+4. chatbot.py sends only the current user message to the emotion classifier in
+   the format [CURRENT] / P: message. This avoids earlier assistant text
+   suppressing the current emotion prediction. The emotion labels and confidence
+   values are printed to the server terminal, not shown as a frontend panel.
+5. context.py uses keyword patterns to infer a broad need, for example career /
+   academic pressure, relationship strain, grief, self-worth, uncertainty, or
+   stress. It also decides whether cultural/Gita grounding might be relevant.
+   These decisions are heuristics, not retrieval from a knowledge base.
+6. prompt_builder.py combines the system instructions, session history, current
+   message, predicted emotions, inferred need, and any safety note. The prompt
+   asks for a warm, concise, practical response; it forbids diagnosis and
+   discourages forced spiritual content. It also says the user's explicit
+   statements take precedence over emotion predictions.
+7. qwen/inference.py formats the messages with the Qwen chat template, disables
+   thinking, runs generation, removes any remaining <think>...</think> block,
+   and returns the answer.
+8. chatbot.py has a narrow consistency guard for a specific contradiction: if
+   the user explicitly says they have zero/no preparation and Qwen says they
+   are already prepared, it substitutes a practical preparation suggestion.
+9. app.py displays the user's and assistant's messages. Per-message diagnostics
+   (emotions, confidence, need/context, grounding flag, safety flags) are
+   printed in the Streamlit server terminal. The main page no longer shows the
+   phase tagline, emotion panel, or always-visible disclaimer footer.
+
+3. ROOT-LEVEL FILES
+-------------------
+app.py
+  Streamlit entry point. Configures the page, loads/caches the chatbot, stores
+  per-browser chat messages, renders the conversation/input and clear button,
+  calls chatbot.chat(), and prints internal diagnostics to the server terminal.
+
+README.md
+  Project setup, Phase 1 overview, architecture, outputs, and later-phase notes.
+  Some paragraphs still mention Qwen3-4B and older emotion-history wording;
+  active model and current emotion behavior are defined by configs and source.
+
+requirements.txt
+  Python dependency lower bounds: PyTorch, Transformers, Streamlit, PEFT, TRL,
+  datasets, scikit-learn, pandas, NumPy, YAML, safetensors, and related tooling.
+  It is not a fully pinned lockfile.
+
+.gitignore
+  Ignores virtual environments, caches, training outputs, user-provided CSVs,
+  generated processed data, Qwen training models, and most generated reports.
+  The trained emotion checkpoint and emotion reports are explicitly allowed.
+
+.gitattributes
+  Routes the checked-in emotion .safetensors and .pt weights through Git LFS.
+  A clone needs Git LFS content, not just pointer files, to load the checkpoint.
+
+data/README.md
+  Documents the required counselling and Gita CSV filenames and column names.
+
+PROJECT_GUIDE.txt
+  This file. It is documentation only; it does not participate in runtime.
+
+.venv/, __pycache__/, .git/
+  Local Python environment, Python bytecode caches, and Git internals. These are
+  not application source. .venv and caches are excluded from Git.
+
+4. CONFIGURATION FILES
+----------------------
+configs/chatbot.yaml
+  Top-level runtime settings: emotion checkpoint path and fallback; Qwen model
+  path, base model name, fine-tuned-mode flag, quantization preference and
+  fallback; Qwen config path; history limit; report directory. Current settings
+  select Qwen/Qwen3-0.6B and use_finetuned=false.
+
+configs/emotion.yaml
+  Emotion training/data settings: roberta-base, 13 label names, max input
+  length, optimizer/training values, split file paths, patient/therapist speaker
+  aliases, and validation threshold-search range. Training config uses context
+  examples; current runtime prediction intentionally uses the current user turn
+  only to avoid history contamination.
+
+configs/qwen.yaml
+  Phase 1 reads model_name, trust_remote_code, and generation settings. Current
+  model_name is Qwen/Qwen3-0.6B; max_new_tokens is 150, with temperature 0.7,
+  top_p 0.9 and repetition_penalty 1.05. The other fields (LoRA, epochs, batch
+  size, data mixing, Qwen processed/output paths) are for later SFT training and
+  are dormant in the current prompting-only app.
+
+5. STREAMLIT AND CHATBOT SOURCE: src/chatbot/
+---------------------------------------------
+src/__init__.py
+  Marks src as a Python package.
+
+src/chatbot/__init__.py
+  Marks chatbot code as a Python package.
+
+src/chatbot/chatbot.py
+  Main orchestrator and CounsellingChatbot class. Loads configs/models, performs
+  current-turn emotion detection, calls safety/context/prompt/generation, limits
+  optional in-memory history, and returns response plus internal metadata. Also
+  contains the narrow unprepared-vs-already-prepared contradiction guard.
+
+src/chatbot/context.py
+  Rule-based need inference, history formatting, and heuristic choice of
+  whether optional cultural grounding is relevant.
+
+src/chatbot/prompt_builder.py
+  System prompt and Qwen message construction. Includes current-turn emotion,
+  inferred need, response history, safety note and factual-consistency guidance.
+
+src/chatbot/safety.py
+  Limited regex checks, canned crisis/harm response text, prompt safety note,
+  and a helper that detects whether generated text mentions Gita-related terms.
+
+src/chatbot/evaluate.py
+  Automatic heuristic scores for empathy, relevance, coherence, emotion
+  alignment, cultural references and basic response appropriateness. These are
+  not human ratings and cannot establish safety or clinical quality.
+
+6. EMOTION SOURCE: src/emotion/
+--------------------------------
+src/emotion/__init__.py
+  Marks emotion code as a Python package.
+
+src/emotion/conversation.py
+  Conversation and Turn data structures; parses IDs such as conversation_turn,
+  repairs only safely inferable missing turn IDs, reconstructs conversations,
+  and returns prior turns for training examples.
+
+src/emotion/quality.py
+  Normalizes counselling CSV column aliases, checks missing/malformed fields,
+  speaker/emotion distributions and duplicates, computes split overlap, and
+  writes data-quality reports/flagged row information.
+
+src/emotion/prepare.py
+  End-to-end emotion data preparation: loads train/validation/test CSVs,
+  validates/repairs IDs, rebuilds conversations, writes turns/examples/summaries,
+  flags unsafe-to-repair rows, and reports split leakage and conversation sizes.
+
+src/emotion/dataset.py
+  Formats emotion examples as [CONTEXT] and [CURRENT] turns for training,
+  builds multi-hot labels, tokenizes examples, and wraps them as a PyTorch
+  Dataset. Current inference uses only [CURRENT] to avoid past-turn interference.
+
+src/emotion/model.py
+  RoBERTa encoder plus dropout and a 13-output linear classification head.
+  Uses BCEWithLogitsLoss for multi-label training and saves/loads encoder,
+  classifier weights, and model metadata.
+
+src/emotion/train.py
+  Training loop: tokenize, batch, backpropagate, clip gradients, schedule the
+  learning rate, select the best validation checkpoint, and tune/save a decision
+  threshold on validation data.
+
+src/emotion/inference.py
+  Loads the trained tokenizer/model and label map. Produces sigmoid probabilities
+  and returns every label at/above threshold, falling back to the highest score
+  if none pass.
+
+src/emotion/metrics.py
+  Applies thresholds and calculates multi-label micro/macro/weighted F1,
+  precision/recall, exact-match ratio, per-label reports and confusion matrices.
+  Can search a validation threshold range for a selected metric.
+
+src/emotion/baseline.py
+  Keyword and majority-label baselines used to compare the trained model.
+  The keyword baseline is also available as a runtime fallback if the checkpoint
+  is missing and fallback is enabled.
+
+src/emotion/evaluate.py
+  Evaluates a checkpoint on test examples, saves prediction examples and test
+  metrics, and compares against majority/keyword baselines.
+
+7. QWEN SOURCE: src/qwen/
+--------------------------
+src/qwen/__init__.py
+  Marks Qwen code as a Python package; its module docstring may reference the
+  earlier 4B plan, but the active runtime model comes from configuration.
+
+src/qwen/inference.py
+  Loads tokenizer and causal language model, optionally loads a LoRA adapter,
+  configures 4-bit quantization only when CUDA is available, applies the Qwen
+  chat template with thinking disabled, generates tokens, and decodes/cleans the
+  assistant reply. On CPU, Qwen is not quantized by this code.
+
+src/qwen/prepare_data.py
+  Later-phase only. Converts therapist turns and Gita Q&A into structured SFT
+  messages, plus optional emotion-aware cultural examples. Preserves original
+  therapist/Gita answers as targets and writes train/validation JSONL.
+
+src/qwen/train.py
+  Later-phase only. Loads SFT datasets, prepares a causal LM, configures LoRA or
+  QLoRA and TRL's SFTTrainer, trains, and saves adapter/tokenizer/metrics.
+  It is not called by the current app.
+
+src/qwen/evaluate.py
+  Compatibility re-export of chatbot response heuristic helpers for the
+  later-phase Qwen evaluation script; not the live app inference path.
+
+8. SHARED UTILITIES: src/utils/
+--------------------------------
+src/utils/__init__.py
+  Marks shared utilities as a Python package.
+
+src/utils/config.py
+  Loads YAML configs, identifies repository root, and resolves relative paths.
+
+src/utils/device.py
+  Selects CUDA when available or CPU otherwise, and prints a short device report.
+
+src/utils/emotions.py
+  Defines canonical 13 emotion labels, aliases such as fear -> Scared, parses
+  CSV multi-label strings, and builds multi-hot vectors.
+
+src/utils/io.py
+  Helpers for creating folders and reading/writing JSON and JSONL artifacts.
+
+src/utils/logging.py
+  Configures consistent stdout and optional file logging for training scripts.
+
+src/utils/seed.py
+  Seeds Python, NumPy and PyTorch, including CUDA, to improve reproducibility.
+
+9. COMMAND-LINE SCRIPTS
+-----------------------
+scripts/test_e2e.py
+  Fast checks for emotion parsing, ID parsing/repair, prompt construction and
+  safety overrides. It does not load either large language model.
+
+scripts/prepare_emotion_data.py
+  CLI wrapper for src/emotion/prepare.py. Reads the three counselling CSVs and
+  produces processed emotion examples, turn records and data-quality reports.
+
+scripts/train_emotion.py
+  CLI wrapper for training the RoBERTa emotion classifier from the prepared
+  train/validation examples.
+
+scripts/evaluate_emotion.py
+  CLI wrapper for test-set emotion metrics and baseline comparison.
+
+scripts/evaluate_chatbot.py
+  Loads the trained emotion model and Qwen, runs patient turns from the
+  processed emotion test split, writes inspectable response JSONL and an
+  automatic-heuristic summary. --limit caps the number of turns; the run done
+  here used --limit 5.
+
+scripts/generate_phase1_report.py
+  Combines the available data-quality, emotion and chatbot evaluation artifacts
+  into outputs/phase1_evaluation.md. It reads model_name from configs/qwen.yaml
+  so the report reflects the active configured model.
+
+scripts/prepare_qwen_data.py
+  Later-phase CLI wrapper for preparing counselling/Gita SFT examples. Requires
+  the Gita chapter CSVs when Gita mixes are enabled.
+
+scripts/train_qwen.py
+  Later-phase CLI wrapper for LoRA/QLoRA fine-tuning. Not used by app.py.
+
+scripts/evaluate_qwen.py
+  Later-phase evaluation CLI. Not part of the current Phase 1 app flow.
+
+10. DATA FILES
+--------------
+data/README.md
+  Dataset schema and filenames. Counselling rows use ID, Speaker, Utterance,
+  Code-Mix, Emotion, Dialogue_Act and Sub topic. Gita rows use chapter,
+  verse_source, question and answer.
+
+data/counselling/my_dataset_train.csv
+data/counselling/my_dataset_val.csv
+data/counselling/my_dataset_test.csv
+  Official counselling conversation splits. Used to prepare/train/evaluate the
+  emotion model; not needed merely to launch the chatbot when the checkpoint is
+  present. CSV files are user data and are excluded by .gitignore.
+
+data/gita/Chapter_1_QA.csv through Chapter_18_QA.csv
+  Eighteen chapter Q&A CSVs. Reserved for later Qwen SFT/cultural examples;
+  not loaded by the current Phase 1 app. The exact filenames are
+  Chapter_1_QA.csv, Chapter_2_QA.csv, Chapter_3_QA.csv, Chapter_4_QA.csv,
+  Chapter_5_QA.csv, Chapter_6_QA.csv, Chapter_7_QA.csv, Chapter_8_QA.csv,
+  Chapter_9_QA.csv, Chapter_10_QA.csv, Chapter_11_QA.csv, Chapter_12_QA.csv,
+  Chapter_13_QA.csv, Chapter_14_QA.csv, Chapter_15_QA.csv, Chapter_16_QA.csv,
+  Chapter_17_QA.csv and Chapter_18_QA.csv.
+
+data/processed/emotion/train_turns.jsonl, val_turns.jsonl, test_turns.jsonl
+  Reconstructed conversation turns with speaker, ID, text and parsed metadata.
+
+data/processed/emotion/train_examples.jsonl, val_examples.jsonl, test_examples.jsonl
+  Tokenizer-ready emotion examples with current utterance, permitted prior
+  context, canonical emotions and multi-hot labels.
+
+data/processed/emotion/train_summary.json, val_summary.json, test_summary.json
+  Per-split counts for conversations, turns and labeled examples.
+
+data/processed/.gitkeep, data/counselling/.gitkeep, data/gita/.gitkeep
+  Empty directory markers, so Git retains the folder structure when data is
+  absent. (A .gitkeep file has no special Git behavior.)
+
+11. TRAINED MODEL ARTIFACTS
+---------------------------
+models/emotion/best/encoder/config.json
+  Hugging Face RoBERTa encoder configuration.
+
+models/emotion/best/encoder/model.safetensors
+  Encoder weights. This is a large binary file stored via Git LFS.
+
+models/emotion/best/classifier.pt
+  PyTorch weights for the 13-label classification head; also Git-LFS tracked.
+
+models/emotion/best/tokenizer/tokenizer.json
+models/emotion/best/tokenizer/tokenizer_config.json
+  Tokenization vocabulary and settings matching the trained classifier.
+
+models/emotion/best/model_config.json
+  Classifier dimensions, dropout and encoder base-model metadata.
+
+models/emotion/best/label_mapping.json
+  Label ordering, selected 0.45 threshold, max input length, and threshold-search
+  results. Label ordering must match the classifier output neurons.
+
+models/emotion/best/best_epoch.json
+  Training epoch and validation summary associated with the saved best model.
+
+models/qwen/
+  Configured as the optional local destination for a future adapter/model. The
+  current app uses the Hugging Face base-model ID because use_finetuned=false.
+  Downloaded base model files are cached outside this repository by Hugging Face.
+
+12. GENERATED OUTPUTS AND REPORTS
+---------------------------------
+outputs/emotion/data_quality_report.json and .md
+  Machine-readable and readable summaries of column/data quality, ID handling
+  and train/validation/test conversation overlap.
+
+outputs/emotion/flagged_missing_ids.csv
+  Rows whose IDs could not be safely repaired.
+
+outputs/emotion/conversation_lengths.csv
+  Conversation-length counts for each prepared split.
+
+outputs/emotion/emotion_baseline_metrics.json
+  Baseline comparison results.
+
+outputs/emotion/test_metrics.json
+  Detailed emotion test scores and per-label metrics.
+
+outputs/emotion/prediction_examples.jsonl
+  Sample test utterances with true and predicted emotion labels.
+
+outputs/emotion/evaluation_summary.json
+  Main emotion report: fine-tuned scores, threshold and baseline results.
+
+outputs/chatbot/inspectable_eval.jsonl
+  Each sampled test input, true/predicted emotions, model response, grounding
+  flag and automatic scores.
+
+outputs/chatbot/automatic_eval_summary.json
+  Aggregate heuristic metrics and evaluation metadata. These files are ignored
+  by the repository's current .gitignore rules unless explicitly added.
+
+outputs/phase1_evaluation.md
+  Human-readable combined report generated from existing output artifacts.
+  It does not run an evaluation itself.
+
+outputs/.gitkeep
+  Empty directory marker.
+
+13. COMMANDS TO RUN THE PROJECT
+-------------------------------
+Run from the repository root in PowerShell. The virtual environment already
+exists in this workspace:
+
+  .\.venv\Scripts\python.exe scripts\test_e2e.py
+  .\.venv\Scripts\python.exe -m streamlit run app.py --server.fileWatcherType none
+
+Open http://localhost:8501. The first run downloads Qwen3-0.6B if it is not
+cached. Disabling Streamlit's file watcher avoids noisy optional torchvision
+watcher errors; the trade-off is that source changes require a manual restart.
+The chatbot itself is text-only and does not require torchvision.
+
+Optional evaluation sequence (requires processed emotion test JSONL and model
+access):
+
+  .\.venv\Scripts\python.exe scripts\evaluate_chatbot.py --limit 5
+  .\.venv\Scripts\python.exe scripts\generate_phase1_report.py
+
+Run test_e2e.py before model-backed evaluation; the fast checks do not load
+Qwen. Stop Streamlit before launching a second model-loading evaluation process
+when RAM is limited.
+
+To rebuild/retrain the emotion model:
+
+  .\.venv\Scripts\python.exe scripts\prepare_emotion_data.py
+  .\.venv\Scripts\python.exe scripts\train_emotion.py
+  .\.venv\Scripts\python.exe scripts\evaluate_emotion.py
+
+To run the later, currently unused Qwen fine-tuning path:
+
+  .\.venv\Scripts\python.exe scripts\prepare_qwen_data.py
+  .\.venv\Scripts\python.exe scripts\train_qwen.py
+  .\.venv\Scripts\python.exe scripts\evaluate_qwen.py
+
+That path needs its configured data, including Gita chapter CSVs. It is not
+required for launching or using the current prompted base model.
+
+14. CURRENT LIMITATIONS AND PROJECT HISTORY
+--------------------------------------------
+- The emotion model is multi-label and dataset-imbalanced. The existing test
+  report has about 0.805 micro-F1 but much lower macro-F1; rare emotions such as
+  Scared are harder than Neutral. A score is a model estimate, not a diagnosis.
+- Current runtime classifies emotion from the current user turn alone. Emotion
+  training examples can include prior context; reevaluation/retraining with the
+  current runtime format would make the training/runtime match stronger.
+- Qwen3-0.6B is a small CPU-friendly demo model, not a guarantee of high-quality
+  counselling. It can misread spelling errors or generate generic replies.
+- Safety checks are a short phrase list. The assistant must not be treated as
+  professional care or the only support in a crisis.
+- Cultural grounding is an optional prompt heuristic. There is no Gita search,
+  citation verification, retrieval database or evidence retrieval.
+- Chatbot automatic scores are rough heuristics, not human evaluation.
+- Some older README text and later-phase docstrings still say Qwen3-4B. The
+  active runtime model is Qwen/Qwen3-0.6B in configs/chatbot.yaml and
+  configs/qwen.yaml.
+
+Recent pushed commits:
+  3284a0c  Switch Phase 1 chatbot to Qwen3-0.6B
+  874ce9b  Improve current-turn emotion handling
+  5fb4771  Remove extra frontend copy
+
+A local untracked structure.txt may be present. It is a generated workspace
+listing (including .venv), not source code and not needed by the app.
