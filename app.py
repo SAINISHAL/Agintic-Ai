@@ -14,7 +14,6 @@ from src.chatbot.chatbot import CounsellingChatbot
 
 st.set_page_config(page_title="Culturally Grounded Counselling Chatbot", layout="centered")
 st.title("Culturally Grounded Counselling Chatbot")
-st.caption("Phase 1 — emotion-aware responses. Not a therapist. Short-term conversation history only.")
 
 
 @st.cache_resource
@@ -65,8 +64,3 @@ if user_text:
     st.session_state.messages.append({"role": "assistant", "content": result["response"]})
     st.rerun()
 
-st.divider()
-st.caption(
-    "This assistant does not diagnose mental disorders and does not replace professional care. "
-    "If you are in crisis in India, call KIRAN 1800-599-0019."
-)
