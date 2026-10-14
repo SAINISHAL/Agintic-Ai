@@ -308,87 +308,157 @@ def train_qwen8b(
     }
 
 
-@app.function(
+@app.cls(
     image=image,
     gpu="A100-80GB",
     timeout=600,
+    scaledown_window=300,
     volumes={"/vol": volume},
 )
-def generate_gita(prompt: str, emotion: str = "Neutral") -> str:
-    """Run inference with the fine-tuned Qwen3-8B model on A100-80GB."""
-    import torch
-    from peft import PeftModel
-    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+class GitaInference:
+    """High-performance warm inference service for Qwen3-8B fine-tuned on Bhagavad Gita."""
 
-    model_id = "Qwen/Qwen3-8B"
-    vol_path = Path("/vol")
-    best_adapter_path = vol_path / "qwen3_8b_gita_lora" / "best"
-    ckpt_dir = vol_path / "qwen3_8b_gita_lora" / "checkpoints"
+    @modal.enter()
+    def load_model(self):
+        """Executed once when the A100 container boots. Preloads base model and LoRA adapter."""
+        import torch
+        from peft import PeftModel
+        from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-    adapter_path = None
-    if best_adapter_path.exists() and (best_adapter_path / "adapter_config.json").exists():
-        adapter_path = str(best_adapter_path)
-        print(f"Loading final trained LoRA adapter from {adapter_path}")
-    else:
-        latest_ckpt, step = find_latest_valid_checkpoint(ckpt_dir)
-        if latest_ckpt:
-            adapter_path = latest_ckpt
-            print(f"Final adapter not generated yet. Loading latest valid checkpoint from step {step}: {adapter_path}")
+        model_id = "Qwen/Qwen3-8B"
+        vol_path = Path("/vol")
+        best_adapter_path = vol_path / "qwen3_8b_gita_lora" / "best"
+        ckpt_dir = vol_path / "qwen3_8b_gita_lora" / "checkpoints"
 
-    tokenizer_source = adapter_path if adapter_path else model_id
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_source, trust_remote_code=True)
+        adapter_path = None
+        if best_adapter_path.exists() and (best_adapter_path / "adapter_config.json").exists():
+            adapter_path = str(best_adapter_path)
+            print(f"[MODAL INIT] Loading final trained LoRA adapter from {adapter_path}")
+        else:
+            latest_ckpt, step = find_latest_valid_checkpoint(ckpt_dir)
+            if latest_ckpt:
+                adapter_path = latest_ckpt
+                print(f"[MODAL INIT] Loading latest valid checkpoint from step {step}: {adapter_path}")
 
-    quant_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_use_double_quant=True,
-    )
-    base_model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        quantization_config=quant_config,
-        device_map="auto",
-        trust_remote_code=True,
-    )
-    if adapter_path:
-        model = PeftModel.from_pretrained(base_model, adapter_path)
-    else:
-        print("No adapter found, falling back to base Qwen3-8B model.")
-        model = base_model
-    model.eval()
+        tokenizer_source = adapter_path if adapter_path else model_id
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_source, trust_remote_code=True)
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
 
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are an empathetic counsellor grounded in the timeless wisdom of the Bhagavad Gita. "
-                "Listen deeply, validate the user's emotional state, and offer practical, balanced guidance."
-            ),
-        },
-        {"role": "user", "content": f"Detected emotion: {emotion}\nCurrent message: {prompt}"},
-    ]
-    formatted = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
-    )
-    inputs = tokenizer(formatted, return_tensors="pt").to(model.device)
+        quant_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+        )
+        print(f"[MODAL INIT] Preloading base model {model_id} on A100 GPU...")
+        base_model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            quantization_config=quant_config,
+            device_map="auto",
+            trust_remote_code=True,
+        )
+        if adapter_path:
+            self.model = PeftModel.from_pretrained(base_model, adapter_path)
+            print("[MODAL INIT] LoRA adapter successfully attached to base model.")
+        else:
+            print("[MODAL INIT WARNING] No adapter found, using base model.")
+            self.model = base_model
 
-    with torch.no_grad():
-        outputs = model.generate(
+        self.model.eval()
+        print("[MODAL INIT] GitaInference service is WARM and ready for instant inference.")
+
+    def _prepare_inputs(self, prompt: str, emotion: str):
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an empathetic counsellor grounded in the timeless wisdom of the Bhagavad Gita. "
+                    "Listen deeply, validate the user's emotional state, and offer practical, balanced guidance."
+                ),
+            },
+            {"role": "user", "content": f"Detected emotion: {emotion}\nCurrent message: {prompt}"},
+        ]
+        formatted = self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+        return self.tokenizer(formatted, return_tensors="pt").to(self.model.device)
+
+    @modal.method()
+    def generate(self, prompt: str, emotion: str = "Neutral", max_new_tokens: int = 256) -> str:
+        """Generate complete response using the preloaded warm model."""
+        import re
+        import torch
+
+        inputs = self._prepare_inputs(prompt, emotion)
+        with torch.inference_mode():
+            outputs = self.model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                temperature=0.7,
+                top_p=0.9,
+                repetition_penalty=1.05,
+                do_sample=True,
+                pad_token_id=self.tokenizer.pad_token_id,
+                eos_token_id=self.tokenizer.eos_token_id,
+            )
+        raw = self.tokenizer.decode(outputs[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True)
+        cleaned = re.sub(r"<think>.*?</think>", "", raw, flags=re.S).strip()
+        return cleaned
+
+    @modal.method()
+    def generate_stream(self, prompt: str, emotion: str = "Neutral", max_new_tokens: int = 256):
+        """Stream response tokens one by one as they are generated by the A100 GPU."""
+        import torch
+        from threading import Thread
+        from transformers import TextIteratorStreamer
+
+        inputs = self._prepare_inputs(prompt, emotion)
+        streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
+
+        generate_kwargs = dict(
             **inputs,
-            max_new_tokens=350,
+            max_new_tokens=max_new_tokens,
             temperature=0.7,
             top_p=0.9,
             repetition_penalty=1.05,
             do_sample=True,
+            pad_token_id=self.tokenizer.pad_token_id,
+            eos_token_id=self.tokenizer.eos_token_id,
+            streamer=streamer,
         )
-    raw = tokenizer.decode(outputs[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True)
-    if "</think>" in raw:
-        response = raw.split("</think>")[-1].strip()
-    else:
-        response = raw.strip()
-    return response
+
+        thread = Thread(target=self.model.generate, kwargs=generate_kwargs)
+        thread.start()
+
+        in_think = False
+        for new_text in streamer:
+            if "<think>" in new_text:
+                in_think = True
+            if in_think:
+                if "</think>" in new_text:
+                    in_think = False
+                    new_text = new_text.split("</think>")[-1]
+                else:
+                    continue
+            if new_text:
+                yield new_text
+        thread.join()
+
+
+@app.function(
+    image=image,
+    gpu="A100-80GB",
+    timeout=600,
+    scaledown_window=300,
+    volumes={"/vol": volume},
+)
+def generate_gita(prompt: str, emotion: str = "Neutral") -> str:
+    """Preserved legacy entrypoint: delegates directly to the warm GitaInference class."""
+    service = GitaInference()
+    return service.generate.remote(prompt=prompt, emotion=emotion)
 
 
 @app.local_entrypoint()

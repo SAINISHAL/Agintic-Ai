@@ -43,24 +43,26 @@ if user_text:
     st.session_state.messages.append({"role": "user", "content": user_text})
     with st.chat_message("user"):
         st.markdown(user_text)
+
     with st.chat_message("assistant"):
-        with st.spinner("Listening..."):
-            result = bot.chat(user_text, conversation_history=conversation_history, persist=False)
-        st.markdown(result["response"])
-    emotions = result.get("emotions") or []
+        # Progressive token streaming for real-time perceived responsiveness
+        response_stream = bot.chat_stream(
+            user_text,
+            conversation_history=conversation_history,
+            persist=False,
+        )
+        full_response = st.write_stream(response_stream)
+
+    # Perform background metadata logging without delaying user response
+    emotions = bot.detect_emotion(user_text).get("emotions", [])
     emotion_summary = ", ".join(
         f"{item['label']} ({item.get('confidence', 0):.2f})" for item in emotions
     ) or "none"
-    safety = result.get("safety") or {}
     print(
         "[chatbot] "
         f"emotions={emotion_summary}; "
-        f"need/context={result.get('context') or 'unspecified'}; "
-        f"grounding_used={result.get('grounding_used', False)}; "
-        f"crisis={safety.get('crisis', False)}; "
-        f"harm_to_others={safety.get('harm_to_others', False)}",
+        f"length={len(full_response)} chars",
         flush=True,
     )
-    st.session_state.messages.append({"role": "assistant", "content": result["response"]})
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
     st.rerun()
-

@@ -202,3 +202,62 @@ class CounsellingChatbot:
     def clear_history(self) -> None:
         self.session_history = []
 
+    def generate_response_stream(
+        self,
+        user_message: str,
+        emotions: list[dict[str, Any]],
+        context: dict[str, Any],
+        conversation_history: list[dict[str, str]] | None = None,
+        safety_note: str | None = None,
+    ):
+        """Stream response tokens as they become available."""
+        if self.generator is None:
+            raise RuntimeError("Call initialize() before generate_response_stream().")
+        history = conversation_history if conversation_history is not None else self.session_history
+        messages = build_messages(user_message, history, emotions, context, extra_safety_note=safety_note)
+        if hasattr(self.generator, "generate_stream"):
+            yield from self.generator.generate_stream(messages)
+        else:
+            yield self.generator.generate(messages)
+
+    def chat_stream(
+        self,
+        user_message: str,
+        conversation_history: list[dict[str, str]] | None = None,
+        persist: bool = True,
+    ):
+        """Stream response tokens progressively and return metadata when complete."""
+        if not self._initialized:
+            self.initialize()
+        if conversation_history is None:
+            conversation_history = list(self.session_history)
+
+        safety = safety_check(user_message)
+        emotion_out = self.detect_emotion(user_message)
+        emotions = emotion_out.get("emotions", [])
+        context = self.build_context(user_message, emotions, conversation_history)
+
+        if safety.get("override_response"):
+            override = safety["override_response"]
+            yield override
+            full_response = override
+        else:
+            collected = []
+            for chunk in self.generate_response_stream(
+                user_message,
+                emotions,
+                context,
+                conversation_history,
+                safety_note=safety.get("prompt_note"),
+            ):
+                collected.append(chunk)
+                yield chunk
+            full_response = "".join(collected)
+            full_response = correct_preparation_contradiction(user_message, full_response)
+
+        if persist:
+            self.session_history.append({"role": "user", "content": user_message})
+            self.session_history.append({"role": "assistant", "content": full_response})
+            if len(self.session_history) > self.max_turns * 2:
+                self.session_history = self.session_history[-(self.max_turns * 2) :]
+
