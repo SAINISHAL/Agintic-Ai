@@ -40,3 +40,6 @@ runs/
 *.ckpt
 !models/emotion/best/**/*.pt
 !models/emotion/best/**/*.safetensors
+
+models/qwen_8b/**
+

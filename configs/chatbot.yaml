@@ -1,14 +1,14 @@
-seed: 42
+﻿seed: 42
 emotion:
   model_path: models/emotion/best
   config_path: configs/emotion.yaml
   fallback_to_baseline: true
 qwen:
-  # Phase 1: prompting-only. The base model is used directly; no fine-tuned adapter is loaded.
-  use_finetuned: false
-  model_path: models/qwen/best
-  base_model_name: Qwen/Qwen3-0.6B
-  config_path: configs/qwen.yaml
+  # Upgraded to Qwen3-8B with fine-tuned Bhagavad Gita LoRA adapter
+  use_finetuned: true
+  model_path: models/qwen_8b/best
+  base_model_name: Qwen/Qwen3-8B
+  config_path: configs/qwen_8b.yaml
   load_in_4bit: true
   fallback_to_base: true
 history:

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import re
 from pathlib import Path
@@ -36,7 +36,7 @@ def correct_preparation_contradiction(user_message: str, response: str) -> str:
 
 
 class CounsellingChatbot:
-    """Phase 1 chatbot: emotion → context → prompt → Qwen.
+    """Phase 1 chatbot: emotion â†’ context â†’ prompt â†’ Qwen.
 
     Session history is in-memory only. No database, profiles, or embeddings.
     """
@@ -190,5 +190,15 @@ class CounsellingChatbot:
             "safety": {"crisis": safety["crisis"], "harm_to_others": safety["harm_to_others"]},
         }
 
+    def respond(self, user_message: str) -> str:
+        """Convenience method returning the text response directly."""
+        res = self.chat(user_message, persist=True)
+        return str(res.get("response", ""))
+
+    def reset(self) -> None:
+        """Reset conversation session history."""
+        self.clear_history()
+
     def clear_history(self) -> None:
         self.session_history = []
+
