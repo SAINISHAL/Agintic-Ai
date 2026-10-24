@@ -25,6 +25,28 @@ def load_bot() -> CounsellingChatbot:
 
 bot = load_bot()
 
+# ── RAG status sidebar ──────────────────────────────────────────────────────
+with st.sidebar:
+    st.header("System Status")
+    rag_ready = bot._rag_enabled
+    if rag_ready:
+        st.success("✅ RAG: Enabled")
+        if bot._rag is not None:
+            stats = bot._rag.stats
+            st.caption(f"Indexed chunks: {stats.get('indexed_chunks', '?')}")
+            st.caption(f"Embedding: {stats.get('embedding_model', 'all-MiniLM-L6-v2').split('/')[-1]}")
+    else:
+        st.warning("⚠️ RAG: Disabled / not ready")
+        if bot._rag is not None and bot._rag.init_error:
+            st.caption(f"Reason: {bot._rag.init_error[:120]}")
+
+    st.divider()
+    st.caption("Emotion model: ✅ Loaded" if bot.emotion_model else "Emotion model: Keyword fallback")
+    provider = getattr(bot, "_provider", "qwen")
+    provider_label = "Mental Health LLM" if provider == "mental_llm" else "Qwen"
+    st.caption(f"Generator: {provider_label}")
+
+# ── Chat UI ─────────────────────────────────────────────────────────────────
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -36,6 +58,14 @@ st.subheader("Conversation")
 for turn in st.session_state.messages:
     with st.chat_message(turn["role"]):
         st.markdown(turn["content"])
+        sources = turn.get("sources")
+        if sources:
+            with st.expander(f"📚 {len(sources)} retrieved source(s) used"):
+                for i, src in enumerate(sources, 1):
+                    ref = src.get("reference") or "?"
+                    source = src.get("source") or "?"
+                    score = src.get("score", 0.0)
+                    st.caption(f"[{i}] {source} — {ref} (relevance: {score:.2f})")
 
 user_text = st.chat_input("Share what is on your mind...")
 if user_text:
@@ -43,26 +73,38 @@ if user_text:
     st.session_state.messages.append({"role": "user", "content": user_text})
     with st.chat_message("user"):
         st.markdown(user_text)
-
     with st.chat_message("assistant"):
-        # Progressive token streaming for real-time perceived responsiveness
-        response_stream = bot.chat_stream(
-            user_text,
-            conversation_history=conversation_history,
-            persist=False,
-        )
-        full_response = st.write_stream(response_stream)
+        with st.spinner("Listening..."):
+            result = bot.chat(user_text, conversation_history=conversation_history, persist=False)
+        st.markdown(result["response"])
 
-    # Perform background metadata logging without delaying user response
-    emotions = bot.detect_emotion(user_text).get("emotions", [])
+        rag_sources = result.get("rag_sources", [])
+        if rag_sources:
+            with st.expander(f"📚 {len(rag_sources)} retrieved source(s) used"):
+                for i, src in enumerate(rag_sources, 1):
+                    ref = src.get("reference") or "?"
+                    source = src.get("source") or "?"
+                    score = src.get("score", 0.0)
+                    st.caption(f"[{i}] {source} — {ref} (relevance: {score:.2f})")
+
+    emotions = result.get("emotions") or []
     emotion_summary = ", ".join(
         f"{item['label']} ({item.get('confidence', 0):.2f})" for item in emotions
     ) or "none"
+    safety = result.get("safety") or {}
     print(
         "[chatbot] "
         f"emotions={emotion_summary}; "
-        f"length={len(full_response)} chars",
+        f"need/context={result.get('context') or 'unspecified'}; "
+        f"grounding_used={result.get('grounding_used', False)}; "
+        f"rag_sources={len(rag_sources)}; "
+        f"crisis={safety.get('crisis', False)}; "
+        f"harm_to_others={safety.get('harm_to_others', False)}",
         flush=True,
     )
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": result["response"],
+        "sources": rag_sources,
+    })
     st.rerun()

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,11 @@ from src.utils.config import load_config, project_root, resolve_path
 from src.utils.device import select_device
 from src.utils.emotions import CANONICAL_EMOTIONS
 
+logger = logging.getLogger(__name__)
+
+# Supported generation providers
+_PROVIDER_QWEN = "qwen"
+_PROVIDER_MENTAL_LLM = "mental_llm"
 
 _UNPREPARED_PATTERN = re.compile(
     r"\b(?:0|zero|no)\s+(?:preparation|prep)\b|\b(?:not|un)prepared\b|\b(?:haven't|have not)\s+prepared\b",
@@ -36,9 +42,21 @@ def correct_preparation_contradiction(user_message: str, response: str) -> str:
 
 
 class CounsellingChatbot:
-    """Phase 1 chatbot: emotion â†’ context â†’ prompt â†’ Qwen.
+    """Emotion-aware counselling chatbot with optional RAG grounding.
 
-    Session history is in-memory only. No database, profiles, or embeddings.
+    Supports multiple generation providers:
+        - ``qwen``       — existing Qwen + LoRA pipeline
+        - ``mental_llm`` — mental-health-focused pretrained LLM
+
+    Pipeline:
+        user message
+        → safety check (crisis takes priority — RAG never overrides this)
+        → emotion classification
+        → context / need detection
+        → RAG retrieval (if enabled and not a crisis)
+        → prompt construction (with retrieved evidence)
+        → selected generator (Qwen *or* MentalHealth LLM)
+        → post-processing
     """
 
     def __init__(
@@ -58,15 +76,23 @@ class CounsellingChatbot:
         )
         self.session_history: list[dict[str, str]] = []
         self.emotion_model: EmotionClassifier | None = None
-        self.generator: QwenGenerator | None = None
+        self.generator: QwenGenerator | Any | None = None  # QwenGenerator or MentalHealthGenerator
+        self._provider: str = self.config.get("generation", {}).get("provider", _PROVIDER_QWEN)
         self.max_turns = int(self.config.get("history", {}).get("max_turns", 12))
         self._initialized = False
 
+        # RAG pipeline — lazy-initialised in initialize()
+        self._rag: Any | None = None  # RAGPipeline | None
+        self._rag_enabled = False
+
+    # ------------------------------------------------------------------
+    # Initialization
+    # ------------------------------------------------------------------
+
     def initialize(self) -> None:
         select_device()
-        qwen_cfg = load_config(self.root / self.config["qwen"]["config_path"])
-        gen_cfg = qwen_cfg.get("generation", {})
 
+        # --- Emotion model ---
         if self.emotion_model_path.exists() and (self.emotion_model_path / "label_mapping.json").exists():
             self.emotion_model = EmotionClassifier(self.emotion_model_path)
         elif self.config["emotion"].get("fallback_to_baseline", True):
@@ -76,6 +102,22 @@ class CounsellingChatbot:
             )
         else:
             raise FileNotFoundError(f"Emotion model not found: {self.emotion_model_path}")
+
+        # --- Generator (dispatch by provider) ---
+        if self._provider == _PROVIDER_MENTAL_LLM:
+            self._init_mental_llm()
+        else:
+            self._init_qwen()
+
+        # --- RAG pipeline ---
+        self._init_rag()
+
+        self._initialized = True
+
+    def _init_qwen(self) -> None:
+        """Initialise the Qwen generator (existing logic, unchanged)."""
+        qwen_cfg = load_config(self.root / self.config["qwen"]["config_path"])
+        gen_cfg = qwen_cfg.get("generation", {})
 
         adapter_or_model = self.qwen_model_path
         base_name = self.config["qwen"].get("base_model_name", "Qwen/Qwen3-0.6B")
@@ -134,7 +176,84 @@ class CounsellingChatbot:
             )
         else:
             raise FileNotFoundError(f"Qwen model not found: {adapter_or_model}")
-        self._initialized = True
+
+    def _init_mental_llm(self) -> None:
+        """Initialise the mental-health LLM generator."""
+        ml_cfg = self.config.get("mental_llm", {})
+        model_id = ml_cfg.get("model_id")
+        if not model_id:
+            raise ValueError(
+                "generation.provider is 'mental_llm' but mental_llm.model_id is not set. "
+                "Check configs/chatbot.yaml."
+            )
+
+        gen_cfg = {
+            "max_new_tokens": ml_cfg.get("max_new_tokens", 256),
+            "temperature": ml_cfg.get("temperature", 0.7),
+            "top_p": ml_cfg.get("top_p", 0.9),
+            "repetition_penalty": ml_cfg.get("repetition_penalty", 1.05),
+        }
+
+        try:
+            from src.mental_llm.inference import MentalHealthGenerator  # noqa: PLC0415
+
+            print(f"[Chatbot] Using mental_llm provider: {model_id}")
+            self.generator = MentalHealthGenerator(
+                model_id=model_id,
+                device=ml_cfg.get("device", "auto"),
+                torch_dtype=ml_cfg.get("torch_dtype", "auto"),
+                generation_config=gen_cfg,
+                trust_remote_code=ml_cfg.get("trust_remote_code", False),
+            )
+        except Exception as exc:
+            logger.error(
+                "[Chatbot] Failed to load mental_llm '%s': %s", model_id, exc,
+                exc_info=True,
+            )
+            # Fall back to Qwen if configured
+            if self.config.get("qwen", {}).get("fallback_to_base", True):
+                print(
+                    f"[NOTICE] mental_llm provider failed ({exc}).\n"
+                    "Falling back to Qwen generator."
+                )
+                self._provider = _PROVIDER_QWEN
+                self._init_qwen()
+            else:
+                raise
+
+    def _init_rag(self) -> None:
+        """Initialise the RAG pipeline from the chatbot config's ``rag`` section."""
+        raw_rag_cfg = self.config.get("rag", {})
+        if not raw_rag_cfg.get("enabled", True):
+            logger.info("[Chatbot] RAG disabled in configuration.")
+            self._rag_enabled = False
+            return
+
+        try:
+            from src.rag.rag_pipeline import RAGPipeline  # noqa: PLC0415
+
+            self._rag = RAGPipeline.from_config(raw_rag_cfg, project_root=self.root)
+            self._rag_enabled = self._rag.is_ready
+            if self._rag_enabled:
+                logger.info("[Chatbot] RAG pipeline ready. Stats: %s", self._rag.stats)
+            else:
+                logger.warning(
+                    "[Chatbot] RAG pipeline not ready: %s. Falling back to LLM-only.",
+                    self._rag.init_error,
+                )
+        except ImportError:
+            logger.warning(
+                "[Chatbot] RAG dependencies not installed (sentence-transformers, chromadb). "
+                "Falling back to LLM-only generation."
+            )
+            self._rag_enabled = False
+        except Exception as exc:
+            logger.error("[Chatbot] RAG initialisation failed: %s", exc, exc_info=True)
+            self._rag_enabled = False
+
+    # ------------------------------------------------------------------
+    # Core pipeline steps
+    # ------------------------------------------------------------------
 
     def detect_emotion(self, user_message: str) -> dict[str, Any]:
         text = f"[CURRENT]\nP: {user_message}"
@@ -157,6 +276,27 @@ class CounsellingChatbot:
         history = conversation_history if conversation_history is not None else self.session_history
         return build_context(user_message, history, emotions, max_turns=self.max_turns)
 
+    def retrieve(
+        self,
+        user_message: str,
+        emotions: list[dict[str, Any]],
+        context: dict[str, Any],
+    ) -> list[Any]:
+        """Run RAG retrieval. Returns empty list when RAG is unavailable."""
+        if not self._rag_enabled or self._rag is None:
+            return []
+        emotion_labels = [e["label"] for e in emotions] if emotions else None
+        need = context.get("need")
+        try:
+            return self._rag.retrieve(
+                user_message,
+                emotions=emotion_labels,
+                need=need,
+            )
+        except Exception as exc:
+            logger.warning("[Chatbot] RAG retrieval error: %s", exc)
+            return []
+
     def generate_response(
         self,
         user_message: str,
@@ -164,12 +304,21 @@ class CounsellingChatbot:
         context: dict[str, Any],
         conversation_history: list[dict[str, str]] | None = None,
         safety_note: str | None = None,
+        retrieved: list[Any] | None = None,
     ) -> str:
         if self.generator is None:
             raise RuntimeError("Call initialize() before generate_response().")
         history = conversation_history if conversation_history is not None else self.session_history
-        messages = build_messages(user_message, history, emotions, context, extra_safety_note=safety_note)
+        messages = build_messages(
+            user_message, history, emotions, context,
+            extra_safety_note=safety_note,
+            retrieved=retrieved,
+        )
         return self.generator.generate(messages)
+
+    # ------------------------------------------------------------------
+    # Main chat entry point
+    # ------------------------------------------------------------------
 
     def chat(
         self,
@@ -182,11 +331,22 @@ class CounsellingChatbot:
         if conversation_history is None:
             conversation_history = list(self.session_history)
 
+        # 1. Safety check — must be first; crisis takes absolute priority
         safety = safety_check(user_message)
+
+        # 2. Emotion classification
         emotion_out = self.detect_emotion(user_message)
         emotions = emotion_out.get("emotions", [])
+
+        # 3. Context / need detection
         context = self.build_context(user_message, emotions, conversation_history)
 
+        # 4. RAG retrieval (skipped for crisis messages)
+        retrieved: list[Any] = []
+        if not safety.get("override_response"):
+            retrieved = self.retrieve(user_message, emotions, context)
+
+        # 5. Generate response
         if safety.get("override_response"):
             response = safety["override_response"]
         else:
@@ -196,14 +356,16 @@ class CounsellingChatbot:
                 context,
                 conversation_history,
                 safety_note=safety.get("prompt_note"),
+                retrieved=retrieved,
             )
             response = correct_preparation_contradiction(user_message, response)
 
+        # 6. Persist history
         if persist:
             self.session_history.append({"role": "user", "content": user_message})
             self.session_history.append({"role": "assistant", "content": response})
             if len(self.session_history) > self.max_turns * 2:
-                self.session_history = self.session_history[-(self.max_turns * 2) :]
+                self.session_history = self.session_history[-(self.max_turns * 2):]
 
         return {
             "response": response,
@@ -211,7 +373,21 @@ class CounsellingChatbot:
             "context": context.get("need"),
             "grounding_used": grounding_used(response),
             "safety": {"crisis": safety["crisis"], "harm_to_others": safety["harm_to_others"]},
+            "rag_sources": [
+                {
+                    "source": r.source_text,
+                    "reference": r.chapter_reference,
+                    "score": round(r.score, 3),
+                }
+                for r in retrieved
+            ],
+            "rag_enabled": self._rag_enabled,
+            "provider": self._provider,
         }
+
+    # ------------------------------------------------------------------
+    # Convenience & compatibility methods
+    # ------------------------------------------------------------------
 
     def respond(self, user_message: str) -> str:
         """Convenience method returning the text response directly."""
@@ -232,12 +408,17 @@ class CounsellingChatbot:
         context: dict[str, Any],
         conversation_history: list[dict[str, str]] | None = None,
         safety_note: str | None = None,
+        retrieved: list[Any] | None = None,
     ):
         """Stream response tokens as they become available."""
         if self.generator is None:
             raise RuntimeError("Call initialize() before generate_response_stream().")
         history = conversation_history if conversation_history is not None else self.session_history
-        messages = build_messages(user_message, history, emotions, context, extra_safety_note=safety_note)
+        messages = build_messages(
+            user_message, history, emotions, context,
+            extra_safety_note=safety_note,
+            retrieved=retrieved,
+        )
         if hasattr(self.generator, "generate_stream"):
             yield from self.generator.generate_stream(messages)
         else:
@@ -249,7 +430,7 @@ class CounsellingChatbot:
         conversation_history: list[dict[str, str]] | None = None,
         persist: bool = True,
     ):
-        """Stream response tokens progressively and return metadata when complete."""
+        """Stream response tokens progressively."""
         if not self._initialized:
             self.initialize()
         if conversation_history is None:
@@ -259,6 +440,10 @@ class CounsellingChatbot:
         emotion_out = self.detect_emotion(user_message)
         emotions = emotion_out.get("emotions", [])
         context = self.build_context(user_message, emotions, conversation_history)
+
+        retrieved: list[Any] = []
+        if not safety.get("override_response"):
+            retrieved = self.retrieve(user_message, emotions, context)
 
         if safety.get("override_response"):
             override = safety["override_response"]
@@ -272,6 +457,7 @@ class CounsellingChatbot:
                 context,
                 conversation_history,
                 safety_note=safety.get("prompt_note"),
+                retrieved=retrieved,
             ):
                 collected.append(chunk)
                 yield chunk
@@ -282,5 +468,4 @@ class CounsellingChatbot:
             self.session_history.append({"role": "user", "content": user_message})
             self.session_history.append({"role": "assistant", "content": full_response})
             if len(self.session_history) > self.max_turns * 2:
-                self.session_history = self.session_history[-(self.max_turns * 2) :]
-
+                self.session_history = self.session_history[-(self.max_turns * 2):]

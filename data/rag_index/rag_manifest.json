@@ -1,0 +1,11 @@
+{
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "chunk_size": 1200,
+  "chunk_overlap": 100,
+  "source_fingerprints": {
+    "D:\\Agentic AI\\data\\Master Dataset - old\\Master Dataset": "3c07950b8d1c"
+  },
+  "chunk_count": 2109,
+  "built_at": "2026-10-24T09:08:02Z",
+  "hash": "6350ff9145014918b346"
+}

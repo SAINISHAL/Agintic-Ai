@@ -3,16 +3,39 @@ emotion:
   model_path: models/emotion/best
   config_path: configs/emotion.yaml
   fallback_to_baseline: true
+
+# ── Generation provider ──────────────────────────────────────────────────────
+# Switch between: "qwen" (existing) or "mental_llm" (mental-health-focused)
+generation:
+  provider: qwen          # Change to "mental_llm" to use the mental health model
+
 qwen:
   # 100% Local Mode - No Modal or external cloud calls
   inference_backend: local
-  use_finetuned: true
+  use_finetuned: false # Set true once Qwen3-8B base weights are fully available or on GPU
   model_path: models/qwen_8b/best
-  base_model_name: Qwen/Qwen3-8B
+  base_model_name: Qwen/Qwen3-0.6B
   fallback_base_name: Qwen/Qwen3-0.6B
   config_path: configs/qwen_8b.yaml
   load_in_4bit: false
   fallback_to_base: true
+
+# ── Mental Health LLM ────────────────────────────────────────────────────────
+# Activated when generation.provider == "mental_llm"
+mental_llm:
+  # Primary (CPU-feasible): Falcon3-1B fine-tuned for mental health counselling
+  model_id: "ShivomH/Falcon3-1B-MentalHealth"
+  device: "auto"               # "auto", "cpu", or "cuda"
+  torch_dtype: "auto"          # "auto", "float32", "float16", "bfloat16"
+  trust_remote_code: false
+  max_new_tokens: 256
+  temperature: 0.7
+  top_p: 0.9
+  repetition_penalty: 1.05
+  # Alternative (GPU-only): uncomment and set provider to mental_llm
+  # model_id: "klyang/MentaLLaMA-chat-7B"
+  # torch_dtype: "float16"
+
 history:
   max_turns: 12
 safety:
@@ -20,3 +43,19 @@ safety:
 paths:
   reports_dir: outputs/chatbot
 
+# ── RAG (Retrieval-Augmented Generation) ───────────────────────────────────
+rag:
+  enabled: true
+  dataset_paths:
+    - "data/Master Dataset - old/Master Dataset"
+  index_dir: "data/rag_index"
+  embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
+  device: "auto"
+  top_k: 5
+  similarity_threshold: null   # null = return all top_k results
+  chunk_size: 1200
+  chunk_overlap: 100
+  batch_size: 64
+  return_sources: true
+  fallback_to_llm: true
+  rebuild_index: false         # set true once to force a fresh rebuild
