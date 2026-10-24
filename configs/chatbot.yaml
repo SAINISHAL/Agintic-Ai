@@ -1,15 +1,17 @@
-﻿seed: 42
+seed: 42
 emotion:
   model_path: models/emotion/best
   config_path: configs/emotion.yaml
   fallback_to_baseline: true
 qwen:
-  # Upgraded to Qwen3-8B with fine-tuned Bhagavad Gita LoRA adapter
+  # 100% Local Mode - No Modal or external cloud calls
+  inference_backend: local
   use_finetuned: true
   model_path: models/qwen_8b/best
   base_model_name: Qwen/Qwen3-8B
+  fallback_base_name: Qwen/Qwen3-0.6B
   config_path: configs/qwen_8b.yaml
-  load_in_4bit: true
+  load_in_4bit: false
   fallback_to_base: true
 history:
   max_turns: 12
@@ -17,3 +19,4 @@ safety:
   enabled: true
 paths:
   reports_dir: outputs/chatbot
+

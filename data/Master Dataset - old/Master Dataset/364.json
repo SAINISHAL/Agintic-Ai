@@ -1,0 +1,32 @@
+{
+  "Paragraph": "Translation: People will always speak of your infamy, and for one who has been honored, dishonor is worse than death.\n\nPurport (Excerpt): ...if you think that people may call you bad names but that you will save your life by fleeing the battlefield, then My advice is that you'd do better to die in the battle. For a respectable man like you, ill fame is worse than death.",
+  "Source_Text": "chapter2.csv",
+  "Chapter/Canto/Verse_Reference": "Chapter 2, Verse 34",
+  "Characters_Involved": [
+    "Krishna",
+    "Arjuna"
+  ],
+  "Situation/Problem_Faced": "Arjuna is willing to sacrifice his honor and live as a beggar to escape the trauma of the battlefield.",
+  "Key_Teaching/Action_Taken": "Krishna highlights the severe psychological pain of public disgrace. He argues that for a person whose identity is built on honor and respect, the constant social humiliation of cowardice will be a suffering far worse than the momentary pain of physical death.",
+  "Outcome/Resolution": "Arjuna is made to weigh the long-term psychological torture of infamy against the honorable execution of his duty.",
+  "Mental_Health_Themes": [
+    "Self-Esteem",
+    "Social Identity",
+    "Psychological Pain vs. Physical Pain"
+  ],
+  "Mental_Health_Theme_Synonyms": {
+    "Self-Esteem": "The core value one places on oneself based on past achievements",
+    "Social Identity": "How one is perceived by society and peers",
+    "Psychological Pain vs. Physical Pain": "Recognizing that mental anguish can exceed bodily harm"
+  },
+  "Spiritual_Psychological_Concept_Indian": [
+    {
+      "Concept": "Kirti (Fame, honor, a vital asset for a leader or warrior)"
+    },
+    {
+      "Concept": "Akirti (Infamy, dishonor, which is spiritually and socially ruinous)"
+    }
+  ],
+  "Brief_Summary_Spiritual": "For a kshatriya (warrior/leader), honor is intricately tied to their Dharma. Losing that honor by fleeing from duty is a form of living death, destroying their social utility and spiritual standing.",
+  "Brief_Summary_Psychological": "Krishna taps into Arjuna's core identity. Arjuna has spent his life building a self-concept as a peerless, courageous warrior. Krishna warns that violating this core identity through an act of cowardice will cause irreparable psychological damage. The resulting shame and cognitive dissonance ('dishonor is worse than death') will haunt him forever."
+}

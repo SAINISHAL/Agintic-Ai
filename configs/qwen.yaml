@@ -1,7 +1,7 @@
-﻿# Qwen3-8B Fine-Tuning & Inference Configuration
+# Qwen Local CPU Configuration
 seed: 42
-model_name: Qwen/Qwen3-8B
-load_in_4bit: true
+model_name: Qwen/Qwen3-0.6B
+load_in_4bit: false
 load_in_8bit: false
 trust_remote_code: true
 max_seq_length: 2048
@@ -17,8 +17,8 @@ logging_steps: 10
 save_steps: 200
 eval_steps: 200
 lr_scheduler_type: cosine
-gradient_checkpointing: true
-bf16: true
+gradient_checkpointing: false
+bf16: false
 fp16: false
 lora:
   r: 32
@@ -33,7 +33,7 @@ lora:
     - up_proj
     - down_proj
 generation:
-  max_new_tokens: 256
+  max_new_tokens: 150
   temperature: 0.7
   top_p: 0.9
   repetition_penalty: 1.05

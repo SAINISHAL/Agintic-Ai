@@ -1,0 +1,31 @@
+{
+  "Paragraph": "Translation: Alas, how strange it is that we are preparing to commit greatly sinful acts, driven by the desire to enjoy royal happiness.\n\nPurport (Excerpt): Driven by selfish motives, one may be inclined to such sinful acts as the killing of one's own brother, father, or mother... Arjuna, being a saintly devotee of the Lord, is always conscious of moral principles and therefore takes care to avoid such activities.",
+  "Source_Text": "chapter1.csv",
+  "Chapter/Canto/Verse_Reference": "Chapter 1, Verse 44",
+  "Characters_Involved": [
+    "Arjuna"
+  ],
+  "Situation/Problem_Faced": "Arjuna experiences a profound sense of self-disgust and cognitive dissonance. He looks at his own motivations and the impending war, and condemns the entire enterprise as a selfish, sinful pursuit of power.",
+  "Key_Teaching/Action_Taken": "He openly laments the situation, condemning the desire for 'royal happiness' as the driver of these 'greatly sinful acts.' He repents for even being on the battlefield.",
+  "Outcome/Resolution": "Arjuna completely detaches himself from the goal of victory, viewing the crown not as a righteous duty, but as a symbol of immense sin and greed.",
+  "Mental_Health_Themes": [
+    "cognitive Dissonance",
+    "guilt",
+    "moral Injury"
+  ],
+  "Mental_Health_Theme_Synonyms": {
+    "cognitive Dissonance": "Value conflict, Internal contradiction",
+    "guilt": "Shame, Self-reproach",
+    "moral Injury": "Psychological wound from participating in perceived evil"
+  },
+  "Spiritual_Psychological_Concept_Indian": [
+    {
+      "Concept": "Papa (Sin; Arjuna's acute awareness and fear of committing a grave transgression)"
+    },
+    {
+      "Concept": "Sukha-lobha (Greed for happiness; Arjuna identifies this as the toxic motivator for the war)"
+    }
+  ],
+  "Brief_Summary_Spiritual": "Arjuna's saintly nature makes him deeply averse to violence for personal gain. However, he misunderstands the context; he is not fighting for personal 'royal happiness,' but to establish Dharma (righteousness) under the direction of the Supreme Lord. His material compassion clouds his spiritual duty.",
+  "Brief_Summary_Psychological": "Arjuna is suffering from acute moral injury before the war even begins. The severe cognitive dissonance between his self-image as a good, righteous person and the brutal, bloody actions required of him causes intense psychological friction. He resolves this friction by condemning the action entirely, driven by deep anticipatory guilt."
+}
