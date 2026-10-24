@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import re
 from pathlib import Path
@@ -78,36 +78,59 @@ class CounsellingChatbot:
             raise FileNotFoundError(f"Emotion model not found: {self.emotion_model_path}")
 
         adapter_or_model = self.qwen_model_path
-        base_name = self.config["qwen"].get("base_model_name", "Qwen/Qwen3-4B")
-        load_4bit = bool(self.config["qwen"].get("load_in_4bit", True))
+        base_name = self.config["qwen"].get("base_model_name", "Qwen/Qwen3-0.6B")
+        load_4bit = bool(self.config["qwen"].get("load_in_4bit", False))
         use_finetuned = bool(self.config["qwen"].get("use_finetuned", False))
+        inference_backend = self.config.get("qwen", {}).get("inference_backend", "local")
+        fallback_base = self.config["qwen"].get("fallback_base_name", "Qwen/Qwen3-0.6B")
+
         if not use_finetuned:
-            print(f"Phase 1: prompting-only {base_name} (no fine-tuning).")
+            print(f"Local chatbot mode: prompting-only {base_name} (backend={inference_backend}).")
             self.generator = QwenGenerator(
                 model_path=base_name,
                 base_model_name=base_name,
                 load_in_4bit=load_4bit,
                 generation_config=gen_cfg,
+                inference_backend=inference_backend,
             )
         elif adapter_or_model.exists() and (
             (adapter_or_model / "adapter_config.json").exists() or (adapter_or_model / "config.json").exists()
         ):
-            self.generator = QwenGenerator(
-                model_path=adapter_or_model,
-                base_model_name=base_name,
-                load_in_4bit=load_4bit,
-                generation_config=gen_cfg,
-            )
+            try:
+                print(f"Attempting to load fine-tuned model from {adapter_or_model} with base {base_name}...")
+                self.generator = QwenGenerator(
+                    model_path=adapter_or_model,
+                    base_model_name=base_name,
+                    load_in_4bit=load_4bit,
+                    generation_config=gen_cfg,
+                    inference_backend=inference_backend,
+                )
+            except Exception as err:
+                if self.config["qwen"].get("fallback_to_base", True):
+                    print(
+                        f"[NOTICE] Could not load fine-tuned adapter locally ({err}).\n"
+                        f"Falling back to local CPU base model: {fallback_base}"
+                    )
+                    self.generator = QwenGenerator(
+                        model_path=fallback_base,
+                        base_model_name=fallback_base,
+                        load_in_4bit=False,
+                        generation_config=gen_cfg,
+                        inference_backend=inference_backend,
+                    )
+                else:
+                    raise
         elif self.config["qwen"].get("fallback_to_base", True):
             print(
                 f"Fine-tuned Qwen path not found at {adapter_or_model}. "
-                f"Loading base model {base_name} as the Phase 1 baseline."
+                f"Loading base model {fallback_base} as the local baseline."
             )
             self.generator = QwenGenerator(
-                model_path=base_name,
-                base_model_name=base_name,
-                load_in_4bit=load_4bit,
+                model_path=fallback_base,
+                base_model_name=fallback_base,
+                load_in_4bit=False,
                 generation_config=gen_cfg,
+                inference_backend=inference_backend,
             )
         else:
             raise FileNotFoundError(f"Qwen model not found: {adapter_or_model}")
