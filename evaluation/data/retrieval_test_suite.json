@@ -1,0 +1,102 @@
+[
+  {
+    "id": "ret_01",
+    "query": "How did Rama handle intense grief after separation from Sita?",
+    "expected_theme": "grief and emotional regulation"
+  },
+  {
+    "id": "ret_02",
+    "query": "Dealing with anger, betrayal, and forgiving a close relative",
+    "expected_theme": "anger and forgiveness"
+  },
+  {
+    "id": "ret_03",
+    "query": "Arjuna's overwhelming anxiety and despondency before doing his duty",
+    "expected_theme": "duty and anxiety"
+  },
+  {
+    "id": "ret_04",
+    "query": "Overcoming self-doubt, fear of failure, and recognizing inner strength",
+    "expected_theme": "courage and inner strength"
+  },
+  {
+    "id": "ret_05",
+    "query": "How to practice detachment and equanimity in the face of sudden loss?",
+    "expected_theme": "detachment and equanimity"
+  },
+  {
+    "id": "ret_06",
+    "query": "Lakshmana's unconditional loyalty and emotional support during hardship",
+    "expected_theme": "support and companionship"
+  },
+  {
+    "id": "ret_07",
+    "query": "Managing impulsive decisions and regret in high-stress situations",
+    "expected_theme": "decision-making and regret"
+  },
+  {
+    "id": "ret_08",
+    "query": "Spiritual surrender and letting go of uncontrollable outcomes",
+    "expected_theme": "surrender and peace"
+  },
+  {
+    "id": "ret_09",
+    "query": "Coping with loneliness and isolation in unfamiliar circumstances",
+    "expected_theme": "resilience in isolation"
+  },
+  {
+    "id": "ret_10",
+    "query": "Mindfulness, calming the wandering mind, and mental discipline",
+    "expected_theme": "meditation and mind control"
+  },
+  {
+    "id": "ret_11",
+    "query": "Dealing with toxic comparison and jealousy towards others' success",
+    "expected_theme": "contentment"
+  },
+  {
+    "id": "ret_12",
+    "query": "Acceptance of life transitions, aging, and mortality",
+    "expected_theme": "impermanence and acceptance"
+  },
+  {
+    "id": "ret_13",
+    "query": "Overcoming moral dilemma when duty conflicts with personal affection",
+    "expected_theme": "ethical dilemma"
+  },
+  {
+    "id": "ret_14",
+    "query": "Finding hope and purpose when everything seems ruined",
+    "expected_theme": "hope and perseverance"
+  },
+  {
+    "id": "ret_15",
+    "query": "Therapeutic listening and non-judgmental presence in distress",
+    "expected_theme": "empathy and listening"
+  },
+  {
+    "id": "ret_16",
+    "query": "Ravana's arrogance and the destructive nature of unchecked ego",
+    "expected_theme": "ego and downfall"
+  },
+  {
+    "id": "ret_17",
+    "query": "Vibhishana choosing righteousness over blind familial loyalty",
+    "expected_theme": "righteousness and courage"
+  },
+  {
+    "id": "ret_18",
+    "query": "Hanuman's humble service and overcoming impossible obstacles",
+    "expected_theme": "humility and service"
+  },
+  {
+    "id": "ret_19",
+    "query": "Bharata's selfless governance and refusal of undeserved power",
+    "expected_theme": "selflessness and integrity"
+  },
+  {
+    "id": "ret_20",
+    "query": "Tara's profound lamentation and stages of mourning after Vali's death",
+    "expected_theme": "bereavement and mourning"
+  }
+]

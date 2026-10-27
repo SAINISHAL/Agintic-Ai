@@ -42,4 +42,6 @@ runs/
 !models/emotion/best/**/*.safetensors
 
 models/qwen_8b/**
+structure.txt
+
 

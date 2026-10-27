@@ -1,0 +1,277 @@
+[
+  {
+    "id": "86_13",
+    "utterance": "Yeah if I'm at work trying to get some paperwork done or something, it just pops in my mind and I can't make it go away. ",
+    "ground_truth_emotions": [
+      "Scared",
+      "Sadness"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "176_31",
+    "utterance": "It was last week actually.",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "inactive",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "172_63",
+    "utterance": "Yeah, I mean, I know it's valuable. I guess what my frustration is, is that I know it's valuable and it used to give me like an emotional payoff of like, pride and, and satisfaction and now I'm not getting that anymore. So I guess I need to realize that even though I'm not getting it right now. If I keep trying, maybe it will happen again, because it did happen before,",
+    "ground_truth_emotions": [
+      "Anticipation"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "129_27",
+    "utterance": "It becomes mushy, mushy.",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "186_63",
+    "utterance": "So will that be short term,",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "symp/reasoning",
+    "dialogue_act": "yq"
+  },
+  {
+    "id": "132_11",
+    "utterance": "No, I mean, I think it was really helpful. I just had to remember to, you know, kind of combat things in the morning and then as the day goes by, if I notice any other thoughts, just write it down and everything. I can do that.",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "on"
+  },
+  {
+    "id": "92_47",
+    "utterance": "Now? I haven't been that motivated. Big. I know I'm going to get it done. It's just I just don't know if I'm gonna get it done today or tomorrow, but I know what's gonna get done.",
+    "ground_truth_emotions": [
+      "Confusion",
+      "Anticipation"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "on"
+  },
+  {
+    "id": "191_45",
+    "utterance": "It was solid or solid soft rubber or anything like that secure like okay, it's it's gonna hold me. That's good feeling comfortable just comfortable.",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "symp/reasoning",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "129_69",
+    "utterance": "Why do you get heart condition? Why do you get heart condition and snoring and sleep apnea?",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "irq"
+  },
+  {
+    "id": "158_11",
+    "utterance": "Yeah. Because it was just like it was that was necessary at the time. And",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "9_5",
+    "utterance": "So I, you know, been there 20 years at my job. Yeah. And they're downsizing lately and they let me go.",
+    "ground_truth_emotions": [
+      "Sadness"
+    ],
+    "sub_topic": "symp/reasoning",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "144_55",
+    "utterance": "No, the feeling bad about the drinking makes me suffer.",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "symp/reasoning",
+    "dialogue_act": "cd"
+  },
+  {
+    "id": "159_45",
+    "utterance": "No, I mean, I guess I could have used a band aid but whatever.",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "144_57",
+    "utterance": "Yeah, I mean, yes, the drinking takes away the suffering but that's not what I meant.",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "op"
+  },
+  {
+    "id": "176_33",
+    "utterance": "Umm it was, it was different, you know, because it was like I could. I did enjoy it because there's like, it's just different aspects and I had to like, speak to people and like, try to get their orders and try to remember it and stuff. Like, I wasn't very good. But I suppose like it was handy to have some money and, like, get out of the house.",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "story",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "176_7",
+    "utterance": "I just nothing's really changed, nothing's really improved. I feel down like absence and feel distant from things and like I said, I can't stop all over.",
+    "ground_truth_emotions": [
+      "Sadness"
+    ],
+    "sub_topic": "symp/reasoning",
+    "dialogue_act": "gc"
+  },
+  {
+    "id": "41_20",
+    "utterance": "no, she did not she. She just there just wasn't that that sense of like, that common commonality, you know, just there was no, no basis for like friendships there were there were there were some young people there who are like screaming, yelling and who are talking to them. And she didn't know how to engage. ",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "story",
+    "dialogue_act": "cd"
+  },
+  {
+    "id": "186_3",
+    "utterance": "I'm feeling really tired and been having this breathlessness you've really been worried about.",
+    "ground_truth_emotions": [
+      "Scared",
+      "Sadness"
+    ],
+    "sub_topic": "symp/reasoning",
+    "dialogue_act": "gt"
+  },
+  {
+    "id": "159_51",
+    "utterance": "That felt good. I feel better. And I'm gonna have to talk to Michelle about this.",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "129_3",
+    "utterance": "My wife tells me Okay, and she does like this.",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "symp/reasoning",
+    "dialogue_act": "cd"
+  },
+  {
+    "id": "159_39",
+    "utterance": "Well I thought a couple things I thought I'm glad I kept this pencil and that I'm just so pissed that I just want to cut so badly.",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "137_43",
+    "utterance": "Then just focus on my studies. Then if I have time for leisure time, like I'll go party with my friends and just be as a party with them doesn't mean I have to drink and I do. One cup is not gonna do anything to my life either. But I'd prefer not to do that I prefer just make sure",
+    "ground_truth_emotions": [
+      "Neutral"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "158_41",
+    "utterance": "There was I hide a lot of savings. That my my parents had built up for me, which I probabiliy don't really exist anymore either through the money invested, and through drugs, clothes. I had a girlfriend at the time but because it was because I was the main character, and in a sense, it always was only the only person that matters and so sort of those around me especially, still didn't really have as much importance. So on nights out, I wouldn't. She just wouldn't be in my mind and so that would be Other women. ",
+    "ground_truth_emotions": [
+      "Confusion"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "41_4",
+    "utterance": "I need your help to find a program that fits her",
+    "ground_truth_emotions": [
+      "Trust"
+    ],
+    "sub_topic": "symp/reasoning",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "38_3",
+    "utterance": "I'm tired when I have to go to work and then I go home and I it's, you know, I just sleep a lot and it's I think it's abnormal. I haven't been eating as much lately I've I've lost a bit of weight and it's just the fact My life so I'm just one come in",
+    "ground_truth_emotions": [
+      "Scared"
+    ],
+    "sub_topic": "story",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "9_55",
+    "utterance": "I mean, worst case, if we don't get a job, I mean, probably. I don't know, like, get a smaller house, or find a way around it. I mean, she would need to have some tough times. ",
+    "ground_truth_emotions": [
+      "Sadness"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "gc"
+  },
+  {
+    "id": "137_23",
+    "utterance": " So since then, I've been hanging out more with them getting to know them. But I could also see that on just living life, I guess. But that's also not fair to them that I'm not there for them as much as I was before, as they are there for me. Yeah. ",
+    "ground_truth_emotions": [
+      "Sadness"
+    ],
+    "sub_topic": "story",
+    "dialogue_act": "cd"
+  },
+  {
+    "id": "172_3",
+    "utterance": "it's about the same. I'm still feeling pretty down. I mean, I just feel really stuck and not happy and I just don't know why.",
+    "ground_truth_emotions": [
+      "Sadness",
+      "Confusion"
+    ],
+    "sub_topic": "symp/reasoning",
+    "dialogue_act": "id"
+  },
+  {
+    "id": "82_25",
+    "utterance": "Yeah, they've been arguing and yelling.",
+    "ground_truth_emotions": [
+      "Sadness"
+    ],
+    "sub_topic": "routine",
+    "dialogue_act": "cd"
+  },
+  {
+    "id": "52_63",
+    "utterance": "And I wouldn't have the urge to lash out at her. Especially if it is trying to be constructive criticism resulting in a situation where there's that tension in our office.",
+    "ground_truth_emotions": [
+      "Anticipation",
+      "Sadness"
+    ],
+    "sub_topic": "story",
+    "dialogue_act": "od"
+  }
+]
