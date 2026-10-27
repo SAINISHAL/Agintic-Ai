@@ -314,6 +314,14 @@ class CounsellingChatbot:
             extra_safety_note=safety_note,
             retrieved=retrieved,
         )
+        # Dynamic token limit based on message type and intensity
+        max_tokens = context.get("max_tokens")
+        if max_tokens and hasattr(self.generator, 'generation_config'):
+            orig = self.generator.generation_config.get("max_new_tokens")
+            self.generator.generation_config["max_new_tokens"] = max_tokens
+            result = self.generator.generate(messages)
+            self.generator.generation_config["max_new_tokens"] = orig
+            return result
         return self.generator.generate(messages)
 
     # ------------------------------------------------------------------
@@ -341,9 +349,9 @@ class CounsellingChatbot:
         # 3. Context / need detection
         context = self.build_context(user_message, emotions, conversation_history)
 
-        # 4. RAG retrieval (skipped for crisis messages)
+        # 4. RAG retrieval (skipped for crisis messages and casual/happy/low-intensity messages)
         retrieved: list[Any] = []
-        if not safety.get("override_response"):
+        if not safety.get("override_response") and context.get("should_retrieve", True):
             retrieved = self.retrieve(user_message, emotions, context)
 
         # 5. Generate response
@@ -442,7 +450,7 @@ class CounsellingChatbot:
         context = self.build_context(user_message, emotions, conversation_history)
 
         retrieved: list[Any] = []
-        if not safety.get("override_response"):
+        if not safety.get("override_response") and context.get("should_retrieve", True):
             retrieved = self.retrieve(user_message, emotions, context)
 
         if safety.get("override_response"):

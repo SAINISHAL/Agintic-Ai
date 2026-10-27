@@ -48,8 +48,12 @@ def safety_check(user_message: str) -> dict[str, Any]:
 def grounding_used(response: str) -> bool:
     return bool(
         re.search(
-            r"\b(bhagavad\s*gita|the gita|krishna|karma yoga|nishkama|dharma)\b",
+            r"\b(bhagavad\s*gita|the gita|krishna|karma yoga|nishkama|dharma"
+            r"|ramayana|mahabharata|arjuna|rama|sita|hanuman|pandava|kaurava"
+            r"|sudama|draupadi|bhishma|yudhishthira|kurukshetra|lanka"
+            r"|ravana|lakshman|ayodhya)\b",
             response,
             re.I,
         )
     )
+
